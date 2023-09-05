@@ -141,11 +141,6 @@ df   <- pipapi::pip (country = ctr,
                      fill_gaps = TRUE,
                      lkup = lkups$versions_paths[[v1]])
 
-v1 <- "20230626_2017_01_02_TEST"
-df   <- pipapi::pip (country = ctr, 
-                     fill_gaps = FALSE,
-                     lkup = lkups$versions_paths[[v1]])
-
 
 
 chn20 <- 

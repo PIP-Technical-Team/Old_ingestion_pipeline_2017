@@ -5,7 +5,7 @@
 # remotes::install_github("PIP-Technical-Team/pipload@dev",
 #                         dependencies = FALSE)
 
-pak::pak("PIP-Technical-Team/wbpip@dev", ask = FALSE)
+pak::pak("PIP-Technical-Team/wbpip@DEV", ask = FALSE)
 pak::pak("PIP-Technical-Team/pipfun@ongoing", ask = FALSE)
 pak::pak("PIP-Technical-Team/pipload@new_pipeline", ask = FALSE)
 
@@ -18,6 +18,12 @@ pak::pak("PIP-Technical-Team/pipload@new_pipeline", ask = FALSE)
 # Select Defaults ---------
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 py <- 2017  # PPP year
+branch <- "main"
+branch <- "DEV"
+release <- "20230626"
+identity <-  "TEST"
+max_year_country   <- 2021
+max_year_aggregate <- 2021
 
 base_dir <- fs::path("e:/PovcalNet/01.personal/wb384996/PIP/pip_ingestion_pipeline")
 
@@ -46,6 +52,12 @@ withr::with_dir(new = base_dir,
 base_dir |> 
   fs::path("_common.R") |> 
   source(echo = FALSE)
+
+base_dir |> 
+  fs::path("_cache_loading_saving.R") |> 
+  source(echo = FALSE)
+
+
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Set targets options   ---------
