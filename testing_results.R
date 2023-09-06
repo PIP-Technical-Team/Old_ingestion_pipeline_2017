@@ -19,7 +19,7 @@
 library(data.table)
 library(ggplot2)
 library(collapse)
-remotes::install_github("PIP-technical-team/pipapi@dev")
+remotes::install_github("PIP-technical-team/pipapi@DEV")
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #                   Subfunctions   ---------
@@ -29,30 +29,30 @@ remotes::install_github("PIP-technical-team/pipapi@dev")
 #                   Set up   ---------
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 data_pipeline <-  "//w1wbgencifs01/pip/pip_ingestion_pipeline/pc_data/output-tfs-sync/ITSES-POVERTYSCORE-DATA"
-lkups <- pipapi::create_versioned_lkups(data_pipeline)
+lkups <- pipapi::create_versioned_lkups(data_pipeline, 
+                                        vintage_pattern = "20230328_2017.*PROD|20230626_2017")
 ctr <- "all"
 
-## survey data
-# pip1   <- pipapi::pip (country = ctr, lkup = lkups$versions_paths$`20220504_2017_01_02_INT`)
-# pip2   <- pipapi::pip (country = ctr, lkup = lkups$versions_paths$`20220602_2017_01_02_INT`)
+# Compare two different version -----------
 
-v1 <- "20220504_2011_02_02_INT"
-v2 <- "20220602_2011_02_02_INT"
+## survey data -----------
 
-pip1   <- pipapi::pip (country = ctr, 
-                       lkup = 
-                      lkups$versions_paths[[v1]]
+v1 <- "20230328_2017_01_02_PROD"
+v2 <- "20230626_2017_01_02_TEST"
+
+pip1   <- pipapi::pip(country = ctr, 
+                      lkup = lkups$versions_paths[[v1]]
                        )
 
-pip2   <- pipapi::pip (country = ctr, 
-                       lkup = lkups$versions_paths[[v2]])
+pip2   <- pipapi::pip(country = ctr, 
+                      lkup = lkups$versions_paths[[v2]])
 
 waldo::compare(pip1, pip2)
 
 
-
-## lineup data
+## lineup data ----------
 pip1   <- pipapi::pip (country = ctr, 
                        fill_gaps = TRUE,
                        lkup = lkups$versions_paths[[v1]])
@@ -61,42 +61,16 @@ pip2   <- pipapi::pip (country = ctr,
                        lkup = lkups$versions_paths[[v2]])
 
 
+waldo::compare(pip1, pip2)
+
+
+### specific countries ------
 waldo::compare(pip1[country_code == "SYR"], 
                pip2[country_code == "SYR"])
 
 
 waldo::compare(pip1[country_code != "SYR"], 
                pip2[country_code != "SYR"])
-
-
-
-
-# 2017 changes
-
-
-pip1   <- pipapi::pip (country = ctr, lkup = lkups$versions_paths[[v1]])
-pip2   <- pipapi::pip (country = ctr, lkup = lkups$versions_paths[[v2]])
-
-waldo::compare(pip1, pip2)
-
-
-
-waldo::compare(pip1[country_code == "SOM"], 
-               pip2[country_code == "SOM"])
-
-
-waldo::compare(pip1[country_code != "SOM"], 
-               pip2[country_code != "SOM"])
-
-
-# Changes in PROD
-
-
-pip1   <- pipapi::pip (country = ctr, lkup = lkups$versions_paths[[v1]])
-pip2   <- pipapi::pip (country = ctr, lkup = lkups$versions_paths[[v2]])
-
-waldo::compare(pip1, pip2)
-
 
 cct <- "IND"
 
@@ -109,21 +83,6 @@ waldo::compare(pip1[!country_code %in% cct],
 
 
 
-# Changes in PROD and lineupt
-
-
-pip1   <- pipapi::pip (country = ctr, 
-                       fill_gaps = TRUE,
-                       lkup = lkups$versions_paths[[v1]])
-pip2   <- pipapi::pip (country = ctr, 
-                       fill_gaps = TRUE,
-                       lkup = lkups$versions_paths[[v2]])
-
-waldo::compare(pip1, pip2)
-
-
-cct <- "SYR"
-
 waldo::compare(pip1[country_code %in% cct], 
                pip2[country_code %in% cct])
 
@@ -131,9 +90,27 @@ waldo::compare(pip1[country_code %in% cct],
 waldo::compare(pip1[!country_code %in% cct], 
                pip2[!country_code %in% cct])
 
+# Aggregate data ------------
 
+agg2   <- pipapi::pip_grp_logic(povline = 2.15, 
+                                lkup = lkups$versions_paths[[v2]], 
+                                group_by         =  c("wb"))
 
-# testing single release
+## max year per region
+
+agg2[, .SD[which.max(reporting_year)], 
+     by = region_code
+     ][, 
+       .(region_code, reporting_year)
+       ]
+
+## values for one region ---------
+agg2[reporting_year >= 2015 & region_code == "SAS"
+][, 
+  .(reporting_year, headcount)
+]
+
+# testing single release ----------
 ctr <- "CHN"
 
 v1 <- "20230626_2017_01_02_TEST"
@@ -154,7 +131,7 @@ chn20 <-
   rbindlist(use.names = TRUE)
 
 
-
+## chart -----
 ggplot(chn20[reporting_year == c(2015, 2017, 2019, 2020) 
              & poverty_line > 1.2 & poverty_line < 3.8], 
        aes(x = poverty_line, 

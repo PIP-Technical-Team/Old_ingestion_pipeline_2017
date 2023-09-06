@@ -17,11 +17,11 @@ pak::pak("PIP-Technical-Team/pipload@new_pipeline", ask = FALSE)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Select Defaults ---------
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-py <- 2017  # PPP year
-branch <- "main"
-branch <- "DEV"
-release <- "20230626"
-identity <-  "TEST"
+py                 <- 2017  # PPP year
+branch             <- "main"
+branch             <- "DEV"
+release            <- "20230626"
+identity           <-  "TEST"
 max_year_country   <- 2021
 max_year_aggregate <- 2021
 
