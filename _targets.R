@@ -5,7 +5,8 @@
 # remotes::install_github("PIP-Technical-Team/pipload@dev",
 #                         dependencies = FALSE)
 
-pak::pak("PIP-Technical-Team/wbpip@DEV", ask = FALSE)
+# pak::pak("PIP-Technical-Team/wbpip@DEV", ask = FALSE)
+pak::pak("PIP-Technical-Team/wbpip@add_spl_to_dist_functions", ask = FALSE)
 pak::pak("PIP-Technical-Team/pipfun@ongoing", ask = FALSE)
 pak::pak("PIP-Technical-Team/pipload@new_pipeline", ask = FALSE)
 
@@ -20,10 +21,16 @@ pak::pak("PIP-Technical-Team/pipload@new_pipeline", ask = FALSE)
 py                 <- 2017  # PPP year
 branch             <- "main"
 branch             <- "DEV"
-release            <- "20230626"
-identity           <-  "TEST"
+release            <- "20231005"
+release            <- "20230919"
+identity           <- "PROD"
 max_year_country   <- 2021
 max_year_aggregate <- 2021
+
+force_create_cache_file         <- FALSE
+save_pip_update_cache_inventory <- FALSE
+save_mp_cache                   <- FALSE
+
 
 base_dir <- fs::path("e:/PovcalNet/01.personal/wb384996/PIP/pip_ingestion_pipeline")
 
@@ -34,7 +41,7 @@ base_dir <- fs::path("e:/PovcalNet/01.personal/wb384996/PIP/pip_ingestion_pipeli
 # Load packages
 withr::with_dir(new = base_dir, 
                 code = {
-                  source("./_packages.R")
+                  # source("./_packages.R")
                   
                   # Load R files
                   purrr::walk(fs::dir_ls(path = "./R", 
@@ -44,6 +51,7 @@ withr::with_dir(new = base_dir,
                   purrr::walk(fs::dir_ls(path = "./R/pipdm/R", 
                                          regexp = "\\.R$"), source)
                 })
+
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Run common R code   ---------
@@ -76,7 +84,9 @@ if (!identical(fs::path(tar_config_get('store')),
 
 list(
   
-  ## LCU survey means ---- 
+  ## Mean estimates ------------
+  
+  ### LCU survey means -------
   # tar_target(cache, cache_o, iteration = "list"),
   
   ### Fetch GD survey means and convert them to daily values ----
@@ -87,7 +97,7 @@ list(
     iteration = "list"
   ),
   
-  ## Calculate LCU survey mean ----
+  ### LCU survey mean list ----
   
   tar_target(
     svy_mean_lcu,
@@ -95,7 +105,7 @@ list(
   ),
   
   
-  ## Create LCU table ------
+  ### LCU table ------
   tar_target(
     svy_mean_lcu_table,
     db_create_lcu_table(
@@ -104,7 +114,9 @@ list(
       pfw_table = dl_aux$pfw)
   ),
   
-  ##  Create DSM table ---- 
+  
+  
+  ### DSM table ---- 
   
   tar_target(svy_mean_ppp_table,
              db_create_dsm_table(
@@ -112,7 +124,7 @@ list(
                cpi_table = dl_aux$cpi,
                ppp_table = dl_aux$ppp)),
   
-  ## Create reference year table ------
+  ### Reference year Mean table ------
   
   tar_target(dt_ref_mean_pred,
              db_create_ref_year_table(
@@ -124,40 +136,26 @@ list(
                pip_years = gls$PIP_YEARS,
                region_code = 'pcn_region_code')),
   
-  ## Distributional stats --1-- 
+  ## Distributional stats ---- 
   
-  # Calculate Lorenz curves (for microdata)
+  ### Lorenz curves (for microdata) ----
   tar_target(
     lorenz,
     mp_lorenz(cache)
   ),
   
-  # Calculate Lorenz curves (for microdata)
-  # tar_target(
-  #   lorenz_all,
-  #   db_compute_lorenz(cache),
-  #   pattern = map(cache),
-  #   iteration = "list"
-  # ),
-  
-  # Clean group data
-  # tar_target(
-  #   lorenz,
-  #   purrr::keep(lorenz_all, ~!is.null(.x))
-  # ),
-  
-  
-  ### Calculate distributional statistics ----
-  
+ 
+  ### Dist statistics list ------
   
   tar_target(dl_dist_stats,
              mp_dl_dist_stats(dt         = cache,
                               mean_table = svy_mean_ppp_table,
                               pop_table  = dl_aux$pop,
-                              cache_id   = cache_ids)
+                              cache_id   = cache_ids, 
+                              ppp_year   = py)
   ),
   
-  ### Create dist stat table ------
+  ### Dist stat table ------
   
   # Covert dist stat list to table
   tar_target(dt_dist_stats,
@@ -169,13 +167,15 @@ list(
   
   ## Output tables --------
   
-  ### Create estimations tables ----
+  ### Reference Year stimations tables ----
   
   tar_target(dt_prod_ref_estimation,
              db_create_ref_estimation_table(
                ref_year_table = dt_ref_mean_pred, 
                dist_table     = dt_dist_stats)
   ),
+  
+  ### Survey Year stimations tables ----
   
   tar_target(dt_prod_svy_estimation,
              db_create_svy_estimation_table(
@@ -184,6 +184,8 @@ list(
                gdp_table = dl_aux$gdp,
                pce_table = dl_aux$pce)
   ),
+  
+  ## SPL ----------
   
   ### Get lineup median -------
   tar_target(dt_lineup_median, 
@@ -203,12 +205,11 @@ list(
              db_compute_lineup_headcount(
                ref_lkup = dt_prod_ref_estimation, 
                cache    = cache, 
-               spl      = dt_spl)
-  ),
+               spl      = dt_spl)),
   
-  ### Coverage table -------
+  ## Coverage and censoring table -------
   
-  # Create coverage table by region
+  ### coverage table by region ----
   tar_target(
     dl_coverage,
     db_create_coverage_table(
@@ -235,7 +236,7 @@ list(
     )
   ),
   
-  ### Create regional population table ----
+  ### Regional population table ----
   
   tar_target(
     dt_pop_region,
@@ -246,7 +247,7 @@ list(
       pip_years   = gls$PIP_YEARS)
   ),
   
-  ### Create decomposition table ----
+  ### Decomposition table ----
   
   tar_target(
     dt_decomposition,

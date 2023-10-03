@@ -16,10 +16,10 @@
 #                   Load Libraries   ---------
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-library(data.table)
+library(fastverse)
 library(ggplot2)
-library(collapse)
-remotes::install_github("PIP-technical-team/pipapi@DEV")
+# pak::pak("PIP-technical-team/pipapi@DEV")
+pak::pak("PIP-technical-team/pipapi@add_spl")
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #                   Subfunctions   ---------
@@ -32,19 +32,21 @@ remotes::install_github("PIP-technical-team/pipapi@DEV")
 
 data_pipeline <-  "//w1wbgencifs01/pip/pip_ingestion_pipeline/pc_data/output-tfs-sync/ITSES-POVERTYSCORE-DATA"
 lkups <- pipapi::create_versioned_lkups(data_pipeline, 
-                                        vintage_pattern = "20230328_2017.*PROD|20230626_2017")
-ctr <- "all"
+                                        vintage_pattern = "20230919_2017_01_02_PROD")
 
 # Compare two different version -----------
 
 ## survey data -----------
 
-v1 <- "20230328_2017_01_02_PROD"
 v2 <- "20230626_2017_01_02_TEST"
+v1 <- "20230919_2017_01_02_PROD"
 
+ctr <- "all"
 pip1   <- pipapi::pip(country = ctr, 
                       lkup = lkups$versions_paths[[v1]]
                        )
+
+
 
 pip2   <- pipapi::pip(country = ctr, 
                       lkup = lkups$versions_paths[[v2]])
@@ -62,6 +64,10 @@ pip2   <- pipapi::pip (country = ctr,
 
 
 waldo::compare(pip1, pip2)
+
+pip2 |> 
+  fsubset(reporting_year >= 2019 & country_code == "IND") |> 
+  fselect(reporting_year, reporting_level, gini)
 
 
 ### specific countries ------
