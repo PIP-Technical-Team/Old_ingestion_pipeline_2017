@@ -21,7 +21,6 @@ pak::pak("PIP-Technical-Team/pipload@new_pipeline", ask = FALSE)
 py                 <- 2017  # PPP year
 branch             <- "main"
 branch             <- "DEV"
-release            <- "20231005"
 release            <- "20230919"
 identity           <- "PROD"
 max_year_country   <- 2021
@@ -188,24 +187,24 @@ list(
   ## SPL ----------
   
   ### Get lineup median -------
-  tar_target(dt_lineup_median, 
-             db_compute_lineup_median(
-               ref_lkup = dt_prod_ref_estimation, 
-               cache    = cache)
-             ),
-  
-  ### Get SPL  ----------
-  tar_target(dt_spl, 
-             db_compute_spl(dt = dt_lineup_median, 
-                            ppp_year = py)
-             ),
-  
-  ### Get SPL headcount -------
-  tar_target(dt_spl_headcount, 
-             db_compute_lineup_headcount(
-               ref_lkup = dt_prod_ref_estimation, 
-               cache    = cache, 
-               spl      = dt_spl)),
+  # tar_target(dt_lineup_median, 
+  #            db_compute_lineup_median(
+  #              ref_lkup = dt_prod_ref_estimation, 
+  #              cache    = cache)
+  #            ),
+  # 
+  # ### Get SPL  ----------
+  # tar_target(dt_spl, 
+  #            db_compute_spl(dt = dt_lineup_median, 
+  #                           ppp_year = py)
+  #            ),
+  # 
+  # ### Get SPL headcount -------
+  # tar_target(dt_spl_headcount, 
+  #            db_compute_lineup_headcount(
+  #              ref_lkup = dt_prod_ref_estimation, 
+  #              cache    = cache, 
+  #              spl      = dt_spl)),
   
   ## Coverage and censoring table -------
   
@@ -314,7 +313,7 @@ list(
   
   ### Additional AUX files ----
   
-  # Countries
+  #### Countries -----------
   tar_target(
     countries_out,
     save_aux_data(
@@ -325,7 +324,7 @@ list(
     format = 'file',
   ),
   
-  # Countries with missing data
+  #### Countries with missing data ------------
   tar_target(
     missing_data_out,
     save_aux_data(
@@ -336,7 +335,7 @@ list(
     format = 'file',
   ),
   
-  # Country List
+  #### Country List ---------
   tar_target(
     country_list_out,
     save_aux_data(
@@ -347,7 +346,7 @@ list(
     format = 'file',
   ),
   
-  # Regions
+  #### Regions -----------
   tar_target(
     regions_out,
     save_aux_data(
@@ -358,7 +357,7 @@ list(
     format = 'file',
   ),
   
-  # Country profiles 
+  #### Country profiles  ------------
   tar_target(
     country_profiles_out,
     save_aux_data(
@@ -369,7 +368,7 @@ list(
     format = 'file',
   ),
   
-  # Poverty lines
+  #### Poverty lines ---------
   tar_target(
     poverty_lines_out,
     save_aux_data(
@@ -390,7 +389,7 @@ list(
     format = 'file',
   ),
   
-  # Survey metadata (for Data Sources page)
+  #### Survey metadata (for Data Sources page) --------
   tar_target(
     survey_metadata_out,
     save_aux_data(
@@ -401,7 +400,7 @@ list(
     format = 'file',
   ),
   
-  # Indicators master
+  #### Indicators ----------
   tar_target(
     indicators_out,
     save_aux_data(
@@ -412,7 +411,10 @@ list(
     format = 'file',
   ),
   
-  # Regional population
+  
+  ### Coverage files ----
+  
+  #### Regional population ---------
   tar_target(
     pop_region_out,
     save_aux_data(
@@ -423,9 +425,7 @@ list(
     format = 'file',
   ),
   
-  ### Coverage files ----
-  
-  # Regional coverage 
+  #### Regional coverage  ----------
   tar_target(
     region_year_coverage_out,
     save_aux_data(
@@ -436,7 +436,7 @@ list(
     format = 'file',
   ),
   
-  # Regional coverage 
+  #### Income group coverage ---------
   tar_target(
     incomeGroup_year_coverage_out,
     save_aux_data(
@@ -447,7 +447,7 @@ list(
     format = 'file',
   ),
   
-  # Country year coverage
+  #### Country year coverage --------
   tar_target(
     country_year_coverage_out,
     save_aux_data(
@@ -468,7 +468,7 @@ list(
   ),
   
   
-  # Decomposition master
+  ### Decomposition master --------
   tar_target(
     decomposition_out,
     save_aux_data(
@@ -479,7 +479,7 @@ list(
     format = 'file',
   ),
   
-  # Framework data
+  #### Framework data --------------
   tar_target(
     framework_out,
     save_aux_data(
@@ -502,15 +502,15 @@ list(
   ),
   
   ### SPL  --------------
-  tar_target(
-    spl_out,
-    save_aux_data(
-      dt_spl_headcount,
-      fs::path(gls$OUT_AUX_DIR_PC, "spl.fst"),
-      compress = TRUE
-    ),
-    format = 'file',
-  ),
+  # tar_target(
+  #   spl_out,
+  #   save_aux_data(
+  #     dt_spl_headcount,
+  #     fs::path(gls$OUT_AUX_DIR_PC, "spl.fst"),
+  #     compress = TRUE
+  #   ),
+  #   format = 'file',
+  # ),
   
   ### Estimation tables -------
   
@@ -568,7 +568,7 @@ list(
                      compress = gls$FST_COMP_LVL)
   ),
   
-  ###Survey means table ----
+  ### Survey means table ----
   
   tar_target(
     survey_mean_file,
