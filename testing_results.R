@@ -369,7 +369,7 @@ m1kb <- unique(m1kb, by = c(by_vars, "m1kb_diff_med"))
 
 
 mdt <- 
-  joyn::merge(mlnp, 
+  joyn::joyn(mlnp, 
               m1kb, 
               by = by_vars, 
               match_type = "1:1")
