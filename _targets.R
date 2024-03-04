@@ -6,24 +6,33 @@
 #                         dependencies = FALSE)
 
 # pak::pak("PIP-Technical-Team/wbpip@DEV", ask = FALSE)
-pak::pak("PIP-Technical-Team/wbpip@add_spl_to_dist_functions", ask = FALSE)
-pak::pak("PIP-Technical-Team/pipfun@ongoing", ask = FALSE)
-pak::pak("PIP-Technical-Team/pipload@new_pipeline", ask = FALSE)
-
+# pak::pak("PIP-Technical-Team/wbpip@add_spl_to_dist_functions", ask = FALSE)
+# pak::pak("PIP-Technical-Team/pipfun@ongoing", ask = FALSE)
+# pak::pak("PIP-Technical-Team/pipload@new_pipeline", ask = FALSE)
+# pak::pak("randrescastaneda/joyn@DEV", ask = FALSE)
+# pak::pak("randrescastaneda/joyn@upload_values_fix", ask = FALSE)
+# pak::pak("PIP-Technical-Team/pipload@ongoing", ask = FALSE)
 
 # remotes::install_github("PIP-Technical-Team/wbpip",
 #                        dependencies = FALSE)
 
 
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Select Defaults ---------
+# Step 1 ---------
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+## Select Defaults ---------
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 py                 <- 2017  # PPP year
 branch             <- "main"
 branch             <- "DEV"
 release            <- "20230919"
+release            <- "20240326"
+identity           <- "TEST"
 identity           <- "PROD"
-max_year_country   <- 2021
+max_year_country   <- 2022
 max_year_aggregate <- 2021
 
 force_create_cache_file         <- FALSE
@@ -33,8 +42,7 @@ save_mp_cache                   <- FALSE
 
 base_dir <- fs::path("e:/PovcalNet/01.personal/wb384996/PIP/pip_ingestion_pipeline")
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Start up ----
+## Start up ----
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Load packages
@@ -52,8 +60,7 @@ withr::with_dir(new = base_dir,
                 })
 
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Run common R code   ---------
+## Run common R code   ---------
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 base_dir |> 
@@ -66,14 +73,39 @@ base_dir |>
 
 
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Set targets options   ---------
+## Set targets options   ---------
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Check that the correct _targets store is used 
 
 if (!identical(fs::path(tar_config_get('store')),
                fs::path(gls$PIP_PIPE_DIR, 'pc_data/_targets2017'))) {
   stop('The store specified in _targets.yaml doesn\'t match with the pipeline directory')
+}
+
+# filter for testing --------
+## filter by country -----------
+
+should_filter <- FALSE
+if (should_filter) {
+  cache_ids <- c("LCA", "CHN", "PRY", "POL") |> 
+    paste(collapse = "|") |> 
+    {\(.) paste0("^(", ., ")")}() |> 
+    grep(cache_ids, value = TRUE)
+  
+  cache           <- cache[cache_ids]
+  cache_inventory <- cache_inventory[cache_id %in% cache_ids]
+}
+
+
+filter_2023 <- TRUE # this should FALSE in production
+if (filter_2023) {
+  rm_ids <- grep("2023", cache_ids)
+  cache_ids <- cache_ids[-rm_ids]
+  
+  cache           <- cache[-rm_ids]
+  cache_inventory <- cache_inventory[cache_id %in% cache_ids]
+  
+  dl_aux$pfw <- dl_aux$pfw[year != 2023]
 }
 
 
@@ -115,7 +147,7 @@ list(
   
   
   
-  ### DSM table ---- 
+  ### Deflated survey mean (DSM) table ---- 
   
   tar_target(svy_mean_ppp_table,
              db_create_dsm_table(
@@ -125,7 +157,7 @@ list(
   
   ### Reference year Mean table ------
   
-  tar_target(dt_ref_mean_pred,
+  tar_target(dt_old_ref_mean_pred,
              db_create_ref_year_table(
                dsm_table = svy_mean_ppp_table,
                gdp_table = dl_aux$gdp,
@@ -134,6 +166,14 @@ list(
                ref_years = gls$PIP_REF_YEARS,
                pip_years = gls$PIP_YEARS,
                region_code = 'pcn_region_code')),
+  
+  tar_target(dt_refy_mean_inc_group, 
+             refy_mean_inc_group(dsm    = svy_mean_ppp_table, 
+                                 gls    = gls, 
+                                 dl_aux = dl_aux)),
+  tar_target(dt_ref_mean_pred, 
+             get_ref_mean_pred(old    = dt_old_ref_mean_pred, 
+                               new    = dt_refy_mean_inc_group)),
   
   ## Distributional stats ---- 
   
@@ -534,15 +574,15 @@ list(
                      compress = gls$FST_COMP_LVL)
   ),
   
-  tar_target(
-    lineup_median_file,
-    format = 'file', 
-    save_estimations(dt       = dt_lineup_median, 
-                     dir      = gls$OUT_EST_DIR_PC, 
-                     name     = "lineup_median", 
-                     time     = gls$TIME, 
-                     compress = gls$FST_COMP_LVL)
-  ),
+  # tar_target(
+  #   lineup_median_file,
+  #   format = 'file', 
+  #   save_estimations(dt       = dt_lineup_median, 
+  #                    dir      = gls$OUT_EST_DIR_PC, 
+  #                    name     = "lineup_median", 
+  #                    time     = gls$TIME, 
+  #                    compress = gls$FST_COMP_LVL)
+  # ),
   
   ###  Lorenz list ----
   
