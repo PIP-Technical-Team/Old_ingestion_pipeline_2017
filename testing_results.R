@@ -21,7 +21,8 @@ library(ggplot2)
 library(ggstatsplot)
 
 # pak::pak("PIP-technical-team/pipapi@DEV")
-pak::pak("PIP-technical-team/pipapi@PROD")
+# pak::pak("PIP-technical-team/wbpip@DEV")
+# pak::pak("PIP-technical-team/pipapi@PROD")
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #                   Subfunctions   ---------
@@ -32,13 +33,20 @@ pak::pak("PIP-technical-team/pipapi@PROD")
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
+v1 <- "20230919_2017_01_02_PROD"
+v2 <- "20240326_2017_01_02_PROD"
+
 data_pipeline <-  fs::path("//w1wbgencifs01/pip/pip_ingestion_pipeline/pc_data/output-tfs-sync/ITSES-POVERTYSCORE-DATA")
 
 data_pipeline <-  fs::path("e:/PIP/pipapi_data/")
 
+compare_dir <- fs::path("p:/03.pip/pre-releases", v2)
 
-lkups <- pipapi::create_versioned_lkups(data_pipeline, 
-                                        vintage_pattern = "20230919_2017_01_02_PROD")
+lkups <- pipapi::create_versioned_lkups(
+  data_pipeline, 
+  # vintage_pattern = "20230919_2017_01_02_PROD"
+  vintage_pattern = "2017_01_02_PROD"
+  )
 
 lkup <- lkups$versions_paths[[lkups$latest_release]]
 
@@ -46,44 +54,69 @@ lkup <- lkups$versions_paths[[lkups$latest_release]]
 
 ## survey data -----------
 
-v1 <- "20230919_2017_01_02_PROD"
-
 ctr <- "all"
-pip1   <- pipapi::pip(country = ctr, 
-                      lkup = lkups$versions_paths[[v1]]
-                       )
+pl <- 2.15
+pip1_cl   <- pipapi::pip(country = ctr, 
+                     lkup = lkups$versions_paths[[v1]], 
+                     povline = pl)
 
-pip1   <- pipapi::pip_grp(country = ctr, 
-                      lkup = lkups$versions_paths[[v1]]
-                       )
+pip2_cl   <- pipapi::pip(country = ctr, 
+                     lkup = lkups$versions_paths[[v2]], 
+                     povline = pl)
+
+fst::write_fst(pip1_cl, fs::path(compare_dir,"syears/pip_old", ext = "fst" ))
+fst::write_fst(pip2_cl, fs::path(compare_dir,"syears/pip_new", ext = "fst" ))
 
 
-
-pip2   <- pipapi::pip(country = ctr, 
-                      lkup = lkups$versions_paths[[v2]])
-
-waldo::compare(pip1, pip2)
+# waldo::compare(pip1, pip2)
 
 
 ## lineup data ----------
-pip1   <- pipapi::pip (country = ctr, 
+pip1   <- pipapi::pip(country = ctr, 
                        fill_gaps = TRUE,
-                       lkup = lkups$versions_paths[[v1]])
-pip2   <- pipapi::pip (country = ctr, 
+                       lkup = lkups$versions_paths[[v1]], 
+                      povline = pl) |> 
+  setorder(country_code, reporting_year, reporting_level, welfare_type)
+
+pip2   <- pipapi::pip(country = ctr, 
                        fill_gaps = TRUE,
-                       lkup = lkups$versions_paths[[v2]])
+                       lkup = lkups$versions_paths[[v2]], 
+                      povline = pl)  |> 
+  setorder(country_code, reporting_year, reporting_level, welfare_type)
+
+fst::write_fst(pip1, fs::path(compare_dir,"lyears/pip_old", ext = "fst" ))
+fst::write_fst(pip2, fs::path(compare_dir,"lyears/pip_new", ext = "fst" ))
 
 
-waldo::compare(pip1, pip2)
+pip2_g   <- pipapi::pip_grp(country = ctr, 
+                     lkup = lkups$versions_paths[[v2]], 
+                     povline = pl
+                      )
+pip1_g   <- pipapi::pip_grp(country = ctr, 
+                     lkup = lkups$versions_paths[[v1]], 
+                     povline = pl
+                      )
 
-pip2 |> 
-  fsubset(reporting_year >= 2019 & country_code == "IND") |> 
-  fselect(reporting_year, reporting_level, gini)
+fst::write_fst(pip1_g, fs::path(compare_dir,"aggregates/pip_old", ext = "fst" ))
+fst::write_fst(pip2_g, fs::path(compare_dir,"aggregates/pip_new", ext = "fst" ))
+
+
+
+# waldo::compare(pip1, pip2)
+
+# pip2 |> 
+#   fsubset(reporting_year >= 2019 & country_code == "IND") |> 
+#   fselect(reporting_year, reporting_level, gini)
 
 
 ### specific countries ------
-waldo::compare(pip1[country_code == "SYR"], 
-               pip2[country_code == "SYR"])
+
+vars <- c("country_code", "reporting_year", "reporting_level", "welfare_type", "mean", "median", "gini", "headcount")
+
+waldo::compare(pip1[country_code == "SYR", 
+                    ..vars], 
+               pip2[country_code == "SYR", 
+                    ..vars])
 
 
 waldo::compare(pip1[country_code != "SYR"], 

@@ -33,7 +33,7 @@ release            <- "20240326"
 identity           <- "TEST"
 identity           <- "PROD"
 max_year_country   <- 2022
-max_year_aggregate <- 2021
+max_year_aggregate <- 2022
 
 force_create_cache_file         <- FALSE
 save_pip_update_cache_inventory <- FALSE
@@ -97,7 +97,7 @@ if (should_filter) {
 }
 
 
-filter_2023 <- TRUE # this should FALSE in production
+filter_2023 <- FALSE # this should FALSE in production
 if (filter_2023) {
   rm_ids <- grep("2023", cache_ids)
   cache_ids <- cache_ids[-rm_ids]
