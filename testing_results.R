@@ -79,8 +79,8 @@ pip1   <- pipapi::pip(country = ctr,
   setorder(country_code, reporting_year, reporting_level, welfare_type)
 
 pip2   <- pipapi::pip(country = ctr, 
-                       fill_gaps = TRUE,
-                       lkup = lkups$versions_paths[[v2]], 
+                      fill_gaps = TRUE,
+                      lkup = lkups$versions_paths[[v2]], 
                       povline = pl)  |> 
   setorder(country_code, reporting_year, reporting_level, welfare_type)
 
