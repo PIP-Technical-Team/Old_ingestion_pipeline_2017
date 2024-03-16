@@ -40,8 +40,6 @@ data_pipeline <-  fs::path("//w1wbgencifs01/pip/pip_ingestion_pipeline/pc_data/o
 
 data_pipeline <-  fs::path("e:/PIP/pipapi_data/")
 
-compare_dir <- fs::path("p:/03.pip/pre-releases", v2)
-
 lkups <- pipapi::create_versioned_lkups(
   data_pipeline, 
   # vintage_pattern = "20230919_2017_01_02_PROD"
@@ -56,27 +54,21 @@ lkup <- lkups$versions_paths[[lkups$latest_release]]
 
 ctr <- "all"
 pl <- 2.15
-pip1_cl   <- pipapi::pip(country = ctr, 
-                     lkup = lkups$versions_paths[[v1]], 
-                     povline = pl)
+pip1_cl   <- pipr::get_stats(povline = pl)
 
 pip2_cl   <- pipapi::pip(country = ctr, 
                      lkup = lkups$versions_paths[[v2]], 
                      povline = pl)
 
-fst::write_fst(pip1_cl, fs::path(compare_dir,"syears/pip_old", ext = "fst" ))
-fst::write_fst(pip2_cl, fs::path(compare_dir,"syears/pip_new", ext = "fst" ))
-
-
 # waldo::compare(pip1, pip2)
 
 
 ## lineup data ----------
-pip1   <- pipapi::pip(country = ctr, 
-                       fill_gaps = TRUE,
-                       lkup = lkups$versions_paths[[v1]], 
-                      povline = pl) |> 
-  setorder(country_code, reporting_year, reporting_level, welfare_type)
+pip1   <- pipr::get_stats(povline = pl, 
+                          fill_gaps = TRUE) |> 
+  frename(year = reporting_year) |> 
+  setorder(country_code, reporting_year, reporting_level, welfare_type) |> 
+  qDT()
 
 pip2   <- pipapi::pip(country = ctr, 
                       fill_gaps = TRUE,
@@ -84,24 +76,16 @@ pip2   <- pipapi::pip(country = ctr,
                       povline = pl)  |> 
   setorder(country_code, reporting_year, reporting_level, welfare_type)
 
-fst::write_fst(pip1, fs::path(compare_dir,"lyears/pip_old", ext = "fst" ))
-fst::write_fst(pip2, fs::path(compare_dir,"lyears/pip_new", ext = "fst" ))
 
-
-pip2_g   <- pipapi::pip_grp(country = ctr, 
+## Aggregate data ---------------
+pip2_g   <- pipapi::pip_grp_logic(country = ctr, 
                      lkup = lkups$versions_paths[[v2]], 
-                     povline = pl
-                      )
-pip1_g   <- pipapi::pip_grp(country = ctr, 
-                     lkup = lkups$versions_paths[[v1]], 
-                     povline = pl
-                      )
-
-fst::write_fst(pip1_g, fs::path(compare_dir,"aggregates/pip_old", ext = "fst" ))
-fst::write_fst(pip2_g, fs::path(compare_dir,"aggregates/pip_new", ext = "fst" ))
+                     povline = pl, 
+                     group_by = "wb")
+pip1_g   <- pipr::get_wb(povline = pl)
 
 
-
+  
 # waldo::compare(pip1, pip2)
 
 # pip2 |> 
