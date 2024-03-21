@@ -167,14 +167,14 @@ list(
                pip_years = gls$PIP_YEARS,
                region_code = 'pcn_region_code')),
   
-  tar_target(dt_refy_mean_inc_group, 
+  tar_target(dt_ref_mean_pred, 
              refy_mean_inc_group(dsm    = svy_mean_ppp_table, 
                                  gls    = gls, 
                                  dl_aux = dl_aux, 
                                  pinv   = pipeline_inventory)),
-  tar_target(dt_ref_mean_pred, 
-             get_ref_mean_pred(old    = dt_old_ref_mean_pred, 
-                               new    = dt_refy_mean_inc_group)),
+  # tar_target(dt_ref_mean_pred, 
+  #            get_ref_mean_pred(old    = dt_old_ref_mean_pred, 
+  #                              new    = dt_refy_mean_inc_group)),
   
   ## Distributional stats ---- 
   
