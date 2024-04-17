@@ -54,10 +54,11 @@ lkup <- lkups$versions_paths[[lkups$latest_release]]
 
 ctr <- "all"
 pl <- 2.15
+
 pip1_cl   <- pipr::get_stats(povline = pl)
 
-pip2_cl   <- pipapi::pip(country = ctr, 
-                     lkup = lkups$versions_paths[[v2]], 
+pip2_cl   <- pipapi::pip(country = ctr,
+                     lkup = lkup,
                      povline = pl)
 
 # waldo::compare(pip1, pip2)
@@ -77,11 +78,25 @@ pip2   <- pipapi::pip(country = ctr,
   setorder(country_code, reporting_year, reporting_level, welfare_type)
 
 
+pip2   <- pipapi::pip(country = ctr, 
+                      fill_gaps = TRUE,
+                      lkup = lkup, 
+                      povline = pl)  |> 
+  setorder(country_code, reporting_year, reporting_level, welfare_type)
+
+
 ## Aggregate data ---------------
 pip2_g   <- pipapi::pip_grp_logic(country = ctr, 
-                     lkup = lkups$versions_paths[[v2]], 
+                     lkup = lkup, 
                      povline = pl, 
                      group_by = "wb")
+
+# pip2_g   <- pipapi::pip_grp_logic(country = ctr, 
+#                      lkup = lkups$versions_paths[[v2]], 
+#                      povline = pl, 
+#                      group_by = "wb")
+# 
+
 pip1_g   <- pipr::get_wb(povline = pl)
 
 
