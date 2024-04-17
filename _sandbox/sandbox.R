@@ -46,9 +46,9 @@ df <- refy_mean_inc_group(dsm    = svy_mean_ppp_table,
 
 
 
-debugonce(trym) # this is a copy of refy_mean_inc_group from ingestion pipeline
+debugonce(refy) # this is a copy of refy_mean_inc_group from ingestion pipeline
 tar_load(svy_mean_ppp_table)
-dq <- trym(dsm    = svy_mean_ppp_table, 
+dq <- refy(dsm    = svy_mean_ppp_table, 
            gls    = gls, 
            dl_aux = dl_aux, 
            pinv   = pipeline_inventory)
