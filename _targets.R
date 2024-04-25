@@ -28,16 +28,16 @@
 py                 <- 2017  # PPP year
 branch             <- "main"
 branch             <- "DEV"
-release            <- "20230919"
 release            <- "20240326"
-identity           <- "TEST"
+release            <- "20240429"
 identity           <- "PROD"
+identity           <- "INT"
 max_year_country   <- 2022
 max_year_aggregate <- 2022
 
-force_create_cache_file         <- FALSE
-save_pip_update_cache_inventory <- FALSE
-save_mp_cache                   <- FALSE
+force_create_cache_file         <- TRUE
+save_pip_update_cache_inventory <- TRUE
+save_mp_cache                   <- TRUE
 
 
 base_dir <- fs::path("e:/PovcalNet/01.personal/wb384996/PIP/pip_ingestion_pipeline")
@@ -83,30 +83,6 @@ if (!identical(fs::path(tar_config_get('store')),
 }
 
 # filter for testing --------
-## filter by country -----------
-
-should_filter <- FALSE
-if (should_filter) {
-  cache_ids <- c("LCA", "CHN", "PRY", "POL") |> 
-    paste(collapse = "|") |> 
-    {\(.) paste0("^(", ., ")")}() |> 
-    grep(cache_ids, value = TRUE)
-  
-  cache           <- cache[cache_ids]
-  cache_inventory <- cache_inventory[cache_id %in% cache_ids]
-}
-
-
-filter_2023 <- FALSE # this should FALSE in production
-if (filter_2023) {
-  rm_ids <- grep("2023", cache_ids)
-  cache_ids <- cache_ids[-rm_ids]
-  
-  cache           <- cache[-rm_ids]
-  cache_inventory <- cache_inventory[cache_id %in% cache_ids]
-  
-  dl_aux$pfw <- dl_aux$pfw[year != 2023]
-}
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
