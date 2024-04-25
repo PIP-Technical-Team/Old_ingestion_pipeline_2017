@@ -234,7 +234,7 @@ list(
       cl_table              = dl_aux$country_list,
       incgrp_table          = dl_aux$income_groups, 
       ref_years             = gls$PIP_REF_YEARS,
-      urban_rural_countries = c("ARG", "CHN", "IDN", "IND", "SUR"),
+      urban_rural_countries = c("ARG", "CHN", "IND", "SUR"),
       digits                = 2
     )
   ),
