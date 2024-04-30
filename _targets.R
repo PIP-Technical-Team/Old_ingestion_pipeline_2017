@@ -35,8 +35,8 @@ identity           <- "INT"
 max_year_country   <- 2022
 max_year_aggregate <- 2022
 
-force_create_cache_file         <- TRUE
-save_pip_update_cache_inventory <- TRUE
+force_create_cache_file         <- FALSE
+save_pip_update_cache_inventory <- FALSE
 save_mp_cache                   <- TRUE
 
 
@@ -70,7 +70,7 @@ base_dir |>
 base_dir |> 
   fs::path("_cache_loading_saving.R") |> 
   source(echo = FALSE)
-
+  
 
 
 ## Set targets options   ---------
@@ -133,15 +133,15 @@ list(
   
   ### Reference year Mean table ------
   
-  tar_target(dt_old_ref_mean_pred,
-             db_create_ref_year_table(
-               dsm_table = svy_mean_ppp_table,
-               gdp_table = dl_aux$gdp,
-               pce_table = dl_aux$pce,
-               pop_table = dl_aux$pop,
-               ref_years = gls$PIP_REF_YEARS,
-               pip_years = gls$PIP_YEARS,
-               region_code = 'pcn_region_code')),
+  # tar_target(dt_old_ref_mean_pred,
+  #            db_create_ref_year_table(
+  #              dsm_table = svy_mean_ppp_table,
+  #              gdp_table = dl_aux$gdp,
+  #              pce_table = dl_aux$pce,
+  #              pop_table = dl_aux$pop,
+  #              ref_years = gls$PIP_REF_YEARS,
+  #              pip_years = gls$PIP_YEARS,
+  #              region_code = 'pcn_region_code')),
   
   tar_target(dt_ref_mean_pred, 
              refy_mean_inc_group(dsm    = svy_mean_ppp_table, 

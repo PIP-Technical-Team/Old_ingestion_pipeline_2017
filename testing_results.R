@@ -35,6 +35,7 @@ library(ggstatsplot)
 
 v1 <- "20230919_2017_01_02_PROD"
 v2 <- "20240326_2017_01_02_PROD"
+v2 <- "20240429_2017_01_02_INT"
 
 data_pipeline <-  fs::path("//w1wbgencifs01/pip/pip_ingestion_pipeline/pc_data/output-tfs-sync/ITSES-POVERTYSCORE-DATA")
 
@@ -43,7 +44,7 @@ data_pipeline <-  fs::path("e:/PIP/pipapi_data/")
 lkups <- pipapi::create_versioned_lkups(
   data_pipeline, 
   # vintage_pattern = "20230919_2017_01_02_PROD"
-  vintage_pattern = "2017_01_02_PROD"
+  vintage_pattern = "2017_01_02_INT"
   )
 
 lkup <- lkups$versions_paths[[lkups$latest_release]]
@@ -56,10 +57,15 @@ ctr <- "all"
 pl <- 2.15
 
 pip1_cl   <- pipr::get_stats(povline = pl)
+setDT(pip1_cl)
+
+setorderv(pip1_cl,  c("country_code", "reporting_level", "year"))
 
 pip2_cl   <- pipapi::pip(country = ctr,
                      lkup = lkup,
                      povline = pl)
+setnames(pip2_cl, "reporting_year", "year")
+setorderv(pip2_cl,  c("country_code", "reporting_level", "year"))
 
 # waldo::compare(pip1, pip2)
 
