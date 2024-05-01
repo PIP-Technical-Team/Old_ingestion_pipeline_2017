@@ -102,19 +102,28 @@ if (!is.null(yrs)) {
 
 # Process in functional programming -----------
 
+# unique framework
+ugpfw <- gpfw[,
+              c("country_code", "year", "survey_acronym", "wt", "reporting_level")
+              ] |> 
+  unique()
+
+
 # define length of inventory
-inv <- vector("list", nrow(gpfw))
-# j <- 1
-ldt <- purrr::map(cli::cli_progress_along(1:nrow(gpfw)), \(j) {
-  gpfw_j <- gpfw[j]
+inv <- vector("list", nrow(ugpfw))
+j <- 1
+ldt <- purrr::map(cli::cli_progress_along(1:nrow(ugpfw)), \(j) {
+  ugpfw_j <- ugpfw[j]
+  gpfw_j  <- gpfw[ugpfw_j, 
+                  on = c("country_code", "year", "survey_acronym", "welfare_type")]
   
   ## local cache data ------------
-  dt <- pipload::pip_load_data(gpfw_j$country,
-                               gpfw_j$year, 
+  dt <- pipload::pip_load_data(ugpfw_j$country,
+                               ugpfw_j$year, 
                                verbose = FALSE)
   
-  inv[[j]] <- pipload::pip_find_data(gpfw_j$country,
-                               gpfw_j$year)
+  inv[[j]] <- pipload::pip_find_data(ugpfw_j$country,
+                                     ugpfw_j$year)
   
   
   area_levels <- dt[, unique(area)]
@@ -134,7 +143,9 @@ ldt <- purrr::map(cli::cli_progress_along(1:nrow(gpfw)), \(j) {
     
     ## Filter data -------------
     dt_area   <- dt[area == i]
-    gd_type   <- sub("\\D", "", gpfw_j$gd_type) |> # remove eveything not numeric
+    gpfw_ji    <- gpfw_j[data_level == i]
+    
+    gd_type   <- sub("\\D", "", gpfw_ji$gd_type) |> # remove eveything not numeric
       as.numeric() 
     
     ## clean group data ------------
@@ -147,8 +158,8 @@ ldt <- purrr::map(cli::cli_progress_along(1:nrow(gpfw)), \(j) {
     
     ## Create synthetic data ------------
     # empty data.table when error or warning
-    emp <- data.table(country_code = gpfw_j$country,
-                      year = gpfw_j$year, 
+    emp <- data.table(country_code = gpfw_ji$country,
+                      year = gpfw_ji$year, 
                       are = i) |> 
       _[, c("welfare", "welfare_lcu", "welfare_ppp") := NA]
     
@@ -158,19 +169,19 @@ ldt <- purrr::map(cli::cli_progress_along(1:nrow(gpfw)), \(j) {
         # Your code...
         wbpip:::sd_create_synth_vector(welfare     = dt_area$welfare, 
                                        population  = dt_area$weight, 
-                                       mean        = gpfw_j$survey_mean_lcu,
-                                       pop         = gpfw_j$pop) |> 
+                                       mean        = gpfw_ji$survey_mean_lcu,
+                                       pop         = gpfw_ji$pop) |> 
           _[, `:=`(
           welfare_lcu       = welfare,
           area              = i,
-          country_code      = gpfw_j$country,
-          year              = gpfw_j$year, 
+          country_code      = gpfw_ji$country,
+          year              = gpfw_ji$year, 
           distribution_type = "micro", 
-          welfare_type      = gpfw_j$welfare_type
+          welfare_type      = gpfw_ji$welfare_type
         )][, 
            welfare_ppp := wbpip:::deflate_welfare_mean(welfare_mean = welfare, 
-                                                       ppp = gpfw_j$ppp, 
-                                                       cpi = gpfw_j$cpi)
+                                                       ppp = gpfw_ji$ppp, 
+                                                       cpi = gpfw_ji$cpi)
         ]
       }, # end of expr section
       
@@ -197,9 +208,9 @@ ldt <- purrr::map(cli::cli_progress_along(1:nrow(gpfw)), \(j) {
 ## inventory file -------
 synth_inv <- rbindlist(inv)
 cache_id <- 
-  with(gpfw, {
+  with(ugpfw, {
     paste(country_code,
-          surveyid_year,
+          year,
           survey_acronym,
           paste0("D", reporting_level),
           wt,
