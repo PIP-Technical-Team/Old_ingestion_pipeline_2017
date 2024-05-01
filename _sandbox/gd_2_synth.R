@@ -6,7 +6,19 @@ withr::local_options(list(joyn.verbose = FALSE))
 py <- 2017
 
 pipload::pip_load_all_aux(replace = TRUE)
-gls <- pipfun::pip_create_globals()
+
+gls <- pipfun::pip_create_globals(
+  root_dir   = Sys.getenv("PIP_ROOT_DIR"), 
+  # out_dir    = fs::path("y:/pip_ingestion_pipeline/temp/"),
+  vintage    = list(release = "20240429", 
+                    ppp_year = py, 
+                    identity = "INT"), 
+  create_dir = TRUE, 
+  max_year_country   = 2023, 
+  max_year_aggregate = 2022
+)
+
+
 
 
 setnames(gdm, 
@@ -108,21 +120,15 @@ ugpfw <- unique(gpfw[, ..uvars])
 
 
 # define length of inventory
-inv <- vector("list", nrow(ugpfw))
 j <- 1
 ldt <- purrr::map(cli::cli_progress_along(1:nrow(ugpfw)), \(j) {
   ugpfw_j <- ugpfw[j]
-  gpfw_j  <- gpfw[ugpfw_j, 
-                  on = uvars]
+  gpfw_j  <- gpfw[ugpfw_j, on = uvars]
   
   ## local cache data ------------
   dt <- pipload::pip_load_data(ugpfw_j$country,
                                ugpfw_j$year, 
                                verbose = FALSE)
-  
-  inv[[j]] <- pipload::pip_find_data(ugpfw_j$country,
-                                     ugpfw_j$year)
-  
   
   area_levels <- dt[, unique(area)]
   lal         <- length(area_levels)
@@ -201,11 +207,17 @@ ldt <- purrr::map(cli::cli_progress_along(1:nrow(ugpfw)), \(j) {
   return(dt)
 })
 
-# save data ---------
 
 ## inventory file -------
-synth_inv <- rbindlist(inv)
-cache_id <- 
+inv <- vector("list", length = nrow(ugpfw))
+
+for (j in 1:nrow(ugpfw)) {
+  ugpfw_j <- ugpfw[j]
+  inv[[j]] <- pipload::pip_find_data(ugpfw_j$country,
+                                     ugpfw_j$year)
+}
+
+cache_ids <- 
   with(ugpfw, {
     paste(country_code,
           year,
@@ -216,9 +228,33 @@ cache_id <-
           sep = "_"
     )
   })
-  
+
+synth_inv <- 
+  rbindlist(inv) |> 
+  _[, 
+    `:=`(
+      cache_id = cache_ids,
+      survey_id = sub("\\.dta", "", filename)
+    ) ]
+
+# save data ---------
+
 
 ## organize and save -----------
-names(ldt) <- cache_id
+names(ldt) <- cache_ids
   
+sv_dir <- gls$CACHE_SVY_DIR_PC
+purrr::walk(cli::cli_progress_along(cache_ids), \(i) {
+  
+  fs::path(sv_dir, cache_ids[[i]], ext = "fst") |> 
+    fst::write_fst(ldt[[i]], path = _)
+})
 
+
+if (".joyn" %in% nanmes(pipeline_inventory)) {
+  pipeline_inventory[, .joyn := NULL]
+}
+
+ninv <- pipeline_inventory[!synth_inv, # remove old cache
+                           on = "cache_id"] |> 
+  rowbind(synth_inv)
