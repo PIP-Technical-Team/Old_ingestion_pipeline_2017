@@ -35,8 +35,8 @@ identity           <- "INT"
 max_year_country   <- 2022
 max_year_aggregate <- 2022
 
-force_create_cache_file         <- FALSE
-save_pip_update_cache_inventory <- FALSE
+force_create_cache_file         <- TRUE
+save_pip_update_cache_inventory <- TRUE
 save_mp_cache                   <- TRUE
 
 
