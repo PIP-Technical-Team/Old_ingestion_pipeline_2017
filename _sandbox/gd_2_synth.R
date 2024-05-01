@@ -85,8 +85,8 @@ gpfw <- joyn::joyn(gpfw, cpi,
 # filter data -----------
 
 
-cts <- NULL
 cts <- "IDN"
+cts <- NULL
 
 yrs <- 1981
 yrs <- NULL
@@ -103,10 +103,8 @@ if (!is.null(yrs)) {
 # Process in functional programming -----------
 
 # unique framework
-ugpfw <- gpfw[,
-              c("country_code", "year", "survey_acronym", "wt", "reporting_level")
-              ] |> 
-  unique()
+uvars <- c("country_code", "year", "survey_acronym", "wt", "reporting_level")
+ugpfw <- unique(gpfw[, ..uvars])
 
 
 # define length of inventory
@@ -115,7 +113,7 @@ j <- 1
 ldt <- purrr::map(cli::cli_progress_along(1:nrow(ugpfw)), \(j) {
   ugpfw_j <- ugpfw[j]
   gpfw_j  <- gpfw[ugpfw_j, 
-                  on = c("country_code", "year", "survey_acronym", "welfare_type")]
+                  on = uvars]
   
   ## local cache data ------------
   dt <- pipload::pip_load_data(ugpfw_j$country,
