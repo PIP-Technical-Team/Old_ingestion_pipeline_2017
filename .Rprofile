@@ -29,11 +29,11 @@ if (requireNamespace("gert", quietly = TRUE)) {
 if (requireNamespace("pushoverr", quietly = TRUE)) {
   
   
-  run_tar <- function() {
+  run_tar <- function(...) {
     # names <- rlang::enquo(names)
     s     <- Sys.time()
     start <-  format(s, "%H:%M")
-    try(tar_make())
+    try(tar_make(...))
     
     f      <- Sys.time()
     finish <- format(f, "%H:%M")

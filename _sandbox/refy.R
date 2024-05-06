@@ -60,7 +60,7 @@ refy <- \(dsm, gls, dl_aux, pinv) {
   rpfw <- pfw |>
     fselect(country_code, survey_acronym, surveyid_year, year = reporting_year) |> 
     collapse::funique()
-      
+  
   w2k <- pinv |> 
     ftransform(welfare_type = fifelse(grepl("_INC_", cache_id), "income", "consumption")) |> 
     fselect(country_code, welfare_type, survey_acronym, surveyid_year) |> 
@@ -69,7 +69,7 @@ refy <- \(dsm, gls, dl_aux, pinv) {
                match_type = "m:1", 
                keep = "inner", 
                reportvar = FALSE
-               ) |>
+    ) |>
     fselect(country_code, welfare_type, year) |> 
     roworder(country_code, welfare_type, year) 
   
@@ -108,7 +108,7 @@ refy <- \(dsm, gls, dl_aux, pinv) {
     ][, data_level := fifelse(ndl == 1, "national", reporting_level)
     ][,
       ndl := NULL]
- 
+  
   ## remove national if urb/rur data level is available for the same and remve
   # urb/rur if national available is subsequent years
   # we need to sort to create the correct id... very inefficient
@@ -143,7 +143,7 @@ refy <- \(dsm, gls, dl_aux, pinv) {
   
   
   
-   
+  
   ## expand those with decimal years ----
   
   sy <- mn |>
@@ -219,8 +219,8 @@ refy <- \(dsm, gls, dl_aux, pinv) {
     fmutate(survey_select = fifelse(any(diff_year == 0), TRUE, FALSE)) |> 
     fgroup_by(c(byvars, "welfare_type")) |> 
     fmutate(lineup_case = fcase(all(diff_year < 0), "below",
-                                 all(diff_year > 0), "above",
-                                 default = "mixed")) |> 
+                                all(diff_year > 0), "above",
+                                default = "mixed")) |> 
     fungroup() |>
     ftransform(lineup_case = fifelse(survey_select == TRUE & lineup_case == "mixed",
                                      "svy_year", lineup_case)) |> 
@@ -248,8 +248,8 @@ refy <- \(dsm, gls, dl_aux, pinv) {
     fgroup_by(c(byvars)) |>  # 
     fmutate(min_diff = fmin(abs(diff_year))) |> 
     fungroup()
-    
-    # Obs to keep
+  
+  # Obs to keep
   cvy <- copy(rr) |> 
     ftransform(keep = fcase(
       #min diff by welfare and sign if mixed (to filter more later)
@@ -269,10 +269,10 @@ refy <- \(dsm, gls, dl_aux, pinv) {
     # drop income cases where there ref year has both income and consumption
     # surveys below and above
     ftransform(keep = fifelse(lineup_case == "mixed" 
-                               & keep == TRUE 
-                               & dup_wt == 4
-                               & welfare_type != "consumption", 
-                               FALSE, keep)) |>
+                              & keep == TRUE 
+                              & dup_wt == 4
+                              & welfare_type != "consumption", 
+                              FALSE, keep)) |>
     # drop cases where only one welfare type is close to the ref year but the
     # other welfare type is both above and below (mixed)
     ftransform(keep = fifelse(lineup_case != "mixed" 

@@ -25,6 +25,10 @@
 ## Select Defaults ---------
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+s     <- Sys.time()
+start <-  format(s, "%H:%M")
+
+
 py                 <- 2017  # PPP year
 branch             <- "main"
 branch             <- "DEV"
@@ -35,9 +39,10 @@ identity           <- "INT"
 max_year_country   <- 2022
 max_year_aggregate <- 2022
 
-force_create_cache_file         <- TRUE
-save_pip_update_cache_inventory <- TRUE
-save_mp_cache                   <- TRUE
+force_create_cache_file         <- FALSE
+save_pip_update_cache_inventory <- FALSE
+force_gd_2_synth                <- FALSE
+save_mp_cache                   <- FALSE
 
 
 base_dir <- fs::path("e:/PovcalNet/01.personal/wb384996/PIP/pip_ingestion_pipeline")
@@ -657,5 +662,17 @@ list(
     convert_to_qs(dir = gls$OUT_AUX_DIR_PC)
   )
 )
+
+
+f      <- Sys.time()
+finish <- format(f, "%H:%M")
+
+d <- f - s
+
+msg <- paste0("Finished pipeline. \nStarted at ", start, 
+              "\nFinished at ", finish, 
+              "\nDifference ", d)
+pushoverr::pushover(msg)
+cli::cli_alert(msg)
 
 

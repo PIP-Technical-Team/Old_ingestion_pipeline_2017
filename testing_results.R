@@ -67,6 +67,7 @@ pip2_cl   <- pipapi::pip(country = ctr,
 setnames(pip2_cl, "reporting_year", "year")
 setorderv(pip2_cl,  c("country_code", "reporting_level", "year"))
 
+
 # waldo::compare(pip1, pip2)
 
 
@@ -77,11 +78,11 @@ pip1   <- pipr::get_stats(povline = pl,
   setorder(country_code, reporting_year, reporting_level, welfare_type) |> 
   qDT()
 
-pip2   <- pipapi::pip(country = ctr, 
-                      fill_gaps = TRUE,
-                      lkup = lkups$versions_paths[[v2]], 
-                      povline = pl)  |> 
-  setorder(country_code, reporting_year, reporting_level, welfare_type)
+# pip2   <- pipapi::pip(country = ctr, 
+#                       fill_gaps = TRUE,
+#                       lkup = lkups$versions_paths[[v2]], 
+#                       povline = pl)  |> 
+#   setorder(country_code, reporting_year, reporting_level, welfare_type)
 
 
 pip2   <- pipapi::pip(country = ctr, 
@@ -96,6 +97,8 @@ pip2_g   <- pipapi::pip_grp_logic(country = ctr,
                      lkup = lkup, 
                      povline = pl, 
                      group_by = "wb")
+setnames(pip2_g, "reporting_year", "year")
+setorder(pip2_g, region_code, year)
 
 # pip2_g   <- pipapi::pip_grp_logic(country = ctr, 
 #                      lkup = lkups$versions_paths[[v2]], 
@@ -104,6 +107,12 @@ pip2_g   <- pipapi::pip_grp_logic(country = ctr,
 # 
 
 pip1_g   <- pipr::get_wb(povline = pl)
+setDT(pip1_g)
+setorder(pip1_g, region_code, year)
+
+
+waldo::compare(pip1_g[region_code == "WLD", .(year, headcount)], 
+               pip2_g[region_code == "WLD", .(year, headcount)])
 
 
   
