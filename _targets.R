@@ -36,10 +36,14 @@ identity           <- "INT"
 max_year_country   <- 2022
 max_year_aggregate <- 2022
 
+## filter creation of synth data
+cts <- yrs <- NULL
+
+## save data
 force_create_cache_file         <- FALSE
 save_pip_update_cache_inventory <- FALSE
-force_gd_2_synth                <- FALSE
-save_mp_cache                   <- FALSE
+force_gd_2_synth                <- TRUE
+save_mp_cache                   <- TRUE
 
 
 base_dir <- fs::path("e:/PovcalNet/01.personal/wb384996/PIP/pip_ingestion_pipeline")
