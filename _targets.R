@@ -25,9 +25,6 @@
 ## Select Defaults ---------
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-s     <- Sys.time()
-start <-  format(s, "%H:%M")
-
 
 py                 <- 2017  # PPP year
 branch             <- "main"
@@ -662,17 +659,4 @@ list(
     convert_to_qs(dir = gls$OUT_AUX_DIR_PC)
   )
 )
-
-
-f      <- Sys.time()
-finish <- format(f, "%H:%M")
-
-d <- f - s
-
-msg <- paste0("Finished pipeline. \nStarted at ", start, 
-              "\nFinished at ", finish, 
-              "\nDifference ", d)
-pushoverr::pushover(msg)
-cli::cli_alert(msg)
-
 
