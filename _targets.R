@@ -42,8 +42,8 @@ cts <- yrs <- NULL
 ## save data
 force_create_cache_file         <- FALSE
 save_pip_update_cache_inventory <- FALSE
-force_gd_2_synth                <- TRUE
-save_mp_cache                   <- TRUE
+force_gd_2_synth                <- FALSE
+save_mp_cache                   <- FALSE
 
 
 base_dir <- fs::path("e:/PovcalNet/01.personal/wb384996/PIP/pip_ingestion_pipeline")
@@ -114,7 +114,8 @@ list(
   
   tar_target(
     svy_mean_lcu,
-    mp_svy_mean_lcu(cache, gd_means)
+    mp_svy_mean_lcu(cache, gd_means),
+    cue = tar_cue(mode = "always")
   ),
   
   

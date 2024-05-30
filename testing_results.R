@@ -18,8 +18,6 @@
 
 library(fastverse)
 library(ggplot2)
-library(ggstatsplot)
-
 # pak::pak("PIP-technical-team/pipapi@DEV")
 # pak::pak("PIP-technical-team/wbpip@DEV")
 # pak::pak("PIP-technical-team/pipapi@PROD")
@@ -43,11 +41,12 @@ data_pipeline <-  fs::path("e:/PIP/pipapi_data/")
 
 lkups <- pipapi::create_versioned_lkups(
   data_pipeline, 
-  # vintage_pattern = "20230919_2017_01_02_PROD"
-  vintage_pattern = "2017_01_02_INT"
+  vintage_pattern = "(20240326|20240429)_2017_01_02"
+  # vintage_pattern = "2017_01_02_INT"
   )
 
 lkup <- lkups$versions_paths[[lkups$latest_release]]
+lkup <- lkups$versions_paths$`20240429_2017_01_02_INT`
 
 # Compare two different version -----------
 
@@ -55,6 +54,11 @@ lkup <- lkups$versions_paths[[lkups$latest_release]]
 
 ctr <- "all"
 pl <- 2.15
+
+
+
+
+
 
 pip1_cl   <- pipr::get_stats(povline = pl)
 setDT(pip1_cl)
@@ -67,8 +71,35 @@ pip2_cl   <- pipapi::pip(country = ctr,
 setnames(pip2_cl, "reporting_year", "year")
 setorderv(pip2_cl,  c("country_code", "reporting_level", "year"))
 
+ 
+x <- "headcount"
 
-# waldo::compare(pip1, pip2)
+x <- c("headcount", "poverty_gap", "poverty_severity", "watts", "mean", "median", "mld", "gini", "polarization", "decile1", "decile10", "cpi", "ppp","spl", "spr")
+
+lapply(x, \(.) {
+  vars <- c("year", .)
+  waldo::compare(pip1_cl[country_code == "NAM", ..vars], 
+                 pip2_cl[country_code == "NAM",..vars], 
+                 tolerance = 1e-6)
+  
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#  waldo::compare(pip1, pip2)
 
 
 ## lineup data ----------
@@ -85,11 +116,56 @@ pip1   <- pipr::get_stats(povline = pl,
 #   setorder(country_code, reporting_year, reporting_level, welfare_type)
 
 
-pip2   <- pipapi::pip(country = ctr, 
+pip2   <- pipapi::pip(country = ctr,
                       fill_gaps = TRUE,
                       lkup = lkup, 
                       povline = pl)  |> 
   setorder(country_code, reporting_year, reporting_level, welfare_type)
+
+# debugonce(pipapi:::fg_pip)
+debugonce(pipapi:::fg_remove_duplicates)
+idnn   <- pipapi::pip(country = "IDN",
+                      fill_gaps = TRUE,
+                      lkup = lkup, 
+                      povline = pl, 
+                     year = c(1988, 1991))  |> 
+  setorder(country_code, reporting_year, reporting_level, welfare_type)
+
+
+idno   <- pipapi::pip(country = "IDN",
+                      fill_gaps = TRUE,
+                      lkup = lkups$versions_paths$`20240326_2017_01_02_PROD`, 
+                      povline = pl, 
+                     year = c(1988, 1991))  |> 
+  setorder(country_code, reporting_year, reporting_level, welfare_type)
+
+
+
+
+
+
+df <- joyn::joyn(pip1[country_code == "KOR" & reporting_year > 2010
+                      , .(reporting_year, mean)],
+                 pip2[country_code == "KOR" & reporting_year > 2010
+                      , .(reporting_year, mean)], 
+                 by = "reporting_year", 
+                 keep_common_vars = TRUE, 
+                 reportvar = FALSE) |> 
+  pivot("reporting_year", names = list("version", "mean")) |> 
+  ftransform(version = fifelse(version == "mean.x", "old", "new"))
+
+
+
+
+
+
+
+
+
+ggplot(df, aes(x = reporting_year)) +
+  geom_line(aes(y = mean, color = version)) +
+  geom_point(aes(y = mean, color = version)) +
+  theme_minimal()
 
 
 ## Aggregate data ---------------
