@@ -30,9 +30,9 @@ py                 <- 2017  # PPP year
 branch             <- "main"
 branch             <- "DEV"
 release            <- "20240326"
-release            <- "20240429"
-identity           <- "PROD"
+release            <- "20240627"
 identity           <- "INT"
+identity           <- "PROD"
 max_year_country   <- 2022
 max_year_aggregate <- 2022
 
@@ -661,7 +661,8 @@ list(
   ## Convert AUX files  to qs ---------
   tar_target(
     aux_qs_out, 
-    convert_to_qs(dir = gls$OUT_AUX_DIR_PC)
+    convert_to_qs(dir = gls$OUT_AUX_DIR_PC),
+    cue = tar_cue(mode = "always")
   )
 )
 

@@ -34,6 +34,7 @@ library(ggplot2)
 v1 <- "20230919_2017_01_02_PROD"
 v2 <- "20240326_2017_01_02_PROD"
 v2 <- "20240429_2017_01_02_INT"
+v2 <- "20240627_2017_01_02_PROD"
 
 data_pipeline <-  fs::path("//w1wbgencifs01/pip/pip_ingestion_pipeline/pc_data/output-tfs-sync/ITSES-POVERTYSCORE-DATA")
 
@@ -46,7 +47,7 @@ lkups <- pipapi::create_versioned_lkups(
   )
 
 lkup <- lkups$versions_paths[[lkups$latest_release]]
-lkup <- lkups$versions_paths$`20240429_2017_01_02_INT`
+lkup <- lkups$versions_paths$`20240627_2017_01_02_PROD`
 
 # Compare two different version -----------
 
