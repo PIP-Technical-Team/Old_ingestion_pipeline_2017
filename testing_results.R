@@ -42,7 +42,7 @@ data_pipeline <-  fs::path("e:/PIP/pipapi_data/")
 
 lkups <- pipapi::create_versioned_lkups(
   data_pipeline, 
-  vintage_pattern = "(20240326|20240429)_2017_01_02"
+  vintage_pattern = "(20240627|20240429)_2017_01_02"
   # vintage_pattern = "2017_01_02_INT"
   )
 
