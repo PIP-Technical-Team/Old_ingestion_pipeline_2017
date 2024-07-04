@@ -5,7 +5,7 @@
 # install.packages(c("conflicted", "dotenv", "targets", "tarchetypes",
 # "bs4Dash", "clustermq", "future", "gt", "pingr", "shinycssloaders",
 # "shinyWidgets", "visNetwork", "fastverse", "tidyfast", "tidyr",
-# "assertthat", "config"))
+# "assertthat", "config","gittargets"))
 
 # remotes::install_github("PIP-Technical-Team/pipload@dev",
 #                         dependencies = FALSE)
@@ -66,28 +66,40 @@ withr::with_dir(new = base_dir,
                                          regexp = "\\.R$"), source)
                 })
 
+# These functions can be added to pip_ingestion_pipeline R file later
+purrr::walk(fs::dir_ls(path = "./SAC", 
+                       regexp = "\\.R$"), source)
 
 ## Run common R code   ---------
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-base_dir |> 
-  fs::path("_common.R") |> 
-  source(echo = FALSE)
+# base_dir |> 
+#   fs::path("_common.R") |> 
+#   source(echo = FALSE)
+
+source("_common_SAC.R", echo = FALSE) 
 
 base_dir |> 
   fs::path("_cache_loading_saving.R") |> 
   source(echo = FALSE)
-  
-
 
 ## Set targets options   ---------
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Check that the correct _targets store is used 
 
-if (!identical(fs::path(tar_config_get('store')),
-               fs::path(gls$PIP_PIPE_DIR, 'pc_data/_targets2017'))) {
-  stop('The store specified in _targets.yaml doesn\'t match with the pipeline directory')
-}
+# if (!identical(fs::path(tar_config_get('store')),
+#                fs::path(gls$PIP_PIPE_DIR, 'pc_data/_targets2017'))) {
+#   stop('The store specified in _targets.yaml doesn\'t match with the pipeline directory')
+# }
+
+tar_config_set(
+  store = config$my_tar_path
+  )
+
+# if (!identical(fs::path(tar_config_get('store')),
+#                fs::path(gls$PIP_PIPE_DIR, 'pc_data/_targets2017'))) {
+#   stop('The store specified in _targets.yaml doesn\'t match with the pipeline directory')
+# }
 
 # filter for testing --------
 
@@ -98,46 +110,75 @@ if (!identical(fs::path(tar_config_get('store')),
 
 list(
   
+  ## Cache files ----------
+  
+  ### Modify cache ----------
+  
+  tar_target(
+    cache_sac,
+    get_cache(cache = cache)
+  ),
+  
   ## Mean estimates ------------
   
   ### LCU survey means -------
   # tar_target(cache, cache_o, iteration = "list"),
   
   ### Fetch GD survey means and convert them to daily values ----
+  # tar_target(
+  #   gd_means, 
+  #   get_groupdata_means(cache_inventory = cache_inventory, 
+  #                       gdm            = dl_aux$gdm), 
+  #   iteration = "list"
+  # ),
+  
   tar_target(
     gd_means, 
-    get_groupdata_means(cache_inventory = cache_inventory, 
-                        gdm            = dl_aux$gdm), 
-    iteration = "list"
+    get_groupdata_means_sac(cache_inventory = cache_inventory, 
+                            gdm = dl_aux$gdm)
   ),
   
   ### LCU survey mean list ----
   
+  # tar_target(
+  #   svy_mean_lcu,
+  #   mp_svy_mean_lcu(cache, gd_means),
+  #   cue = tar_cue(mode = "always")
+  # ),
+  
   tar_target(
     svy_mean_lcu,
-    mp_svy_mean_lcu(cache, gd_means),
-    cue = tar_cue(mode = "always")
+    db_compute_survey_mean_sac(cache = cache_sac, 
+                               gd_mean = gd_means)
   ),
   
   
   ### LCU table ------
+  # tar_target(
+  #   svy_mean_lcu_table,
+  #   db_create_lcu_table(
+  #     dl        = svy_mean_lcu,
+  #     pop_table = dl_aux$pop,
+  #     pfw_table = dl_aux$pfw)
+  # ),
+  
   tar_target(
     svy_mean_lcu_table,
-    db_create_lcu_table(
-      dl        = svy_mean_lcu,
-      pop_table = dl_aux$pop,
-      pfw_table = dl_aux$pfw)
+    db_create_lcu_table_sac(dt = svy_mean_lcu,
+                            pop_table = dl_aux$pop,
+                            pfw_table = dl_aux$pfw)
   ),
-  
-  
   
   ### Deflated survey mean (DSM) table ---- 
   
+  # tar_target(svy_mean_ppp_table,
+  #            db_create_dsm_table(
+  #              lcu_table = svy_mean_lcu_table,
+  #              cpi_table = dl_aux$cpi,
+  #              ppp_table = dl_aux$ppp)),
+  
   tar_target(svy_mean_ppp_table,
-             db_create_dsm_table(
-               lcu_table = svy_mean_lcu_table,
-               cpi_table = dl_aux$cpi,
-               ppp_table = dl_aux$ppp)),
+             db_create_dsm_table_sac(lcu_table = svy_mean_lcu_table)),
   
   ### Reference year Mean table ------
   
@@ -171,22 +212,35 @@ list(
  
   ### Dist statistics list ------
   
-  tar_target(dl_dist_stats,
-             mp_dl_dist_stats(dt         = cache,
-                              mean_table = svy_mean_ppp_table,
-                              pop_table  = dl_aux$pop,
-                              cache_id   = cache_ids, 
-                              ppp_year   = py)
+  # tar_target(dl_dist_stats,
+  #            mp_dl_dist_stats(dt         = cache,
+  #                             mean_table = svy_mean_ppp_table,
+  #                             pop_table  = dl_aux$pop,
+  #                             cache_id   = cache_ids, 
+  #                             ppp_year   = py)
+  # ),
+  
+  tar_target(
+    dl_dist_stats,
+    db_dist_stats_sac(cache = cache_sac,
+                      mean_table = svy_mean_ppp_table)
   ),
   
   ### Dist stat table ------
   
   # Covert dist stat list to table
-  tar_target(dt_dist_stats,
-             db_create_dist_table(
-               dl        = dl_dist_stats,
-               dsm_table = svy_mean_ppp_table, 
-               crr_inv   = cache_inventory)
+  # tar_target(dt_dist_stats,
+  #            db_create_dist_table(
+  #              dl        = dl_dist_stats,
+  #              dsm_table = svy_mean_ppp_table, 
+  #              crr_inv   = cache_inventory)
+  # ),
+  
+  tar_target(
+    dt_dist_stats,
+    db_create_dist_table_sac(dt = dl_dist_stats,
+                             dsm_table = svy_mean_ppp_table,
+                             cache_inventory = cache_inventory)
   ),
   
   ## Output tables --------
@@ -201,13 +255,19 @@ list(
   
   ### Survey Year stimations tables ----
   
+  # tar_target(dt_prod_svy_estimation,
+  #            db_create_svy_estimation_table(
+  #              dsm_table = svy_mean_ppp_table, 
+  #              dist_table = dt_dist_stats,
+  #              gdp_table = dl_aux$gdp,
+  #              pce_table = dl_aux$pce)
+  # ),
+  
   tar_target(dt_prod_svy_estimation,
-             db_create_svy_estimation_table(
-               dsm_table = svy_mean_ppp_table, 
-               dist_table = dt_dist_stats,
-               gdp_table = dl_aux$gdp,
-               pce_table = dl_aux$pce)
-  ),
+             db_create_svy_estimation_table_sac(dsm_table = svy_mean_ppp_table, 
+                                                dist_table = dt_dist_stats,
+                                                gdp_table = dl_aux$gdp,
+                                                pce_table = dl_aux$pce)),
   
   ## SPL ----------
   
