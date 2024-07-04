@@ -2,21 +2,21 @@
 # Install packages ----
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+# install.packages(c("conflicted", "dotenv", "targets", "tarchetypes",
+# "bs4Dash", "clustermq", "future", "gt", "pingr", "shinycssloaders",
+# "shinyWidgets", "visNetwork", "fastverse", "tidyfast", "tidyr",
+# "assertthat", "config"))
+
 # remotes::install_github("PIP-Technical-Team/pipload@dev",
 #                         dependencies = FALSE)
 
-# pak::pak("PIP-Technical-Team/wbpip@DEV", ask = FALSE)
-# pak::pak("PIP-Technical-Team/wbpip@add_spl_to_dist_functions", ask = FALSE)
-# pak::pak("PIP-Technical-Team/pipfun@ongoing", ask = FALSE)
-# pak::pak("PIP-Technical-Team/pipload@new_pipeline", ask = FALSE)
 # pak::pak("randrescastaneda/joyn@DEV", ask = FALSE)
-# pak::pak("randrescastaneda/joyn@upload_values_fix", ask = FALSE)
-# pak::pak("PIP-Technical-Team/pipload@ongoing", ask = FALSE)
 
-# remotes::install_github("PIP-Technical-Team/wbpip",
+# remotes::install_github("PIP-Technical-Team/wbpip@dev",
 #                        dependencies = FALSE)
 
-
+# remotes::install_github("PIP-Technical-Team/pipfun@dev",
+#                        dependencies = FALSE)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Step 1 ---------
@@ -27,12 +27,12 @@
 
 
 py                 <- 2017  # PPP year
-branch             <- "main"
+#branch             <- "main"
 branch             <- "DEV"
-release            <- "20240326"
-release            <- "20240627"
+release            <- "20240429"
+#release            <- "20240627"
 identity           <- "INT"
-identity           <- "PROD"
+#identity           <- "PROD"
 max_year_country   <- 2022
 max_year_aggregate <- 2022
 
@@ -46,7 +46,8 @@ force_gd_2_synth                <- FALSE
 save_mp_cache                   <- FALSE
 
 
-base_dir <- fs::path("e:/PovcalNet/01.personal/wb384996/PIP/pip_ingestion_pipeline")
+config <- config::get(config = Sys.info()['user'])
+base_dir <- config$base_dir
 
 ## Start up ----
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
