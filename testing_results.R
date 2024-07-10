@@ -42,7 +42,8 @@ data_pipeline <-  fs::path("e:/PIP/pipapi_data/")
 
 lkups <- pipapi::create_versioned_lkups(
   data_pipeline, 
-  vintage_pattern = "(20240627|20240429)_2017_01_02"
+  # vintage_pattern = "(20240627|20240429)_2017_01_02"
+  vintage_pattern = "(20240627)_2017_01_02"
   # vintage_pattern = "2017_01_02_INT"
   )
 
@@ -123,6 +124,18 @@ pip2   <- pipapi::pip(country = ctr,
                       povline = pl)  |> 
   setorder(country_code, reporting_year, reporting_level, welfare_type)
 
+pip2cy   <- pipapi::pip(country = ctr,
+                      fill_gaps = FALSE,
+                      lkup = lkup, 
+                      povline = pl)  |> 
+  setorder(country_code, reporting_year, reporting_level, welfare_type)
+
+nga   <- pipapi::pip(country = "NGA",
+                      fill_gaps = FALSE,
+                      lkup = lkup, 
+                      povline = pl)  |> 
+  setorder(country_code, reporting_year, reporting_level, welfare_type)
+
 # debugonce(pipapi:::fg_pip)
 debugonce(pipapi:::fg_remove_duplicates)
 idnn   <- pipapi::pip(country = "IDN",
@@ -174,6 +187,15 @@ pip2_g   <- pipapi::pip_grp_logic(country = ctr,
                      lkup = lkup, 
                      povline = pl, 
                      group_by = "wb")
+setnames(pip2_g, "reporting_year", "year")
+setorder(pip2_g, region_code, year)
+
+## Aggregate data ---------------
+pip2_g   <- pipapi::pip_grp_logic(country = ctr, 
+                     lkup = lkup, 
+                     povline = pl, 
+                     group_by = "wb", 
+                     year = 2020:2024)
 setnames(pip2_g, "reporting_year", "year")
 setorder(pip2_g, region_code, year)
 

@@ -32,9 +32,10 @@ branch             <- "DEV"
 release            <- "20240429"
 #release            <- "20240627"
 identity           <- "INT"
-#identity           <- "PROD"
-max_year_country   <- 2022
-max_year_aggregate <- 2022
+identity           <- "PROD"
+max_year_country   <- 2023
+max_year_aggregate <- 2024
+max_year_lineup    <- 2022
 
 ## filter creation of synth data
 cts <- yrs <- NULL
@@ -264,33 +265,13 @@ list(
   # ),
   
   tar_target(dt_prod_svy_estimation,
-             db_create_svy_estimation_table_sac(dsm_table = svy_mean_ppp_table, 
-                                                dist_table = dt_dist_stats,
-                                                gdp_table = dl_aux$gdp,
-                                                pce_table = dl_aux$pce)),
+             db_create_svy_estimation_table_sac(
+              dsm_table = svy_mean_ppp_table,
+              dist_table = dt_dist_stats,
+              gdp_table = dl_aux$gdp,
+              pce_table = dl_aux$pce)),
   
-  ## SPL ----------
-  
-  ### Get lineup median -------
-  # tar_target(dt_lineup_median, 
-  #            db_compute_lineup_median(
-  #              ref_lkup = dt_prod_ref_estimation, 
-  #              cache    = cache)
-  #            ),
-  # 
-  # ### Get SPL  ----------
-  # tar_target(dt_spl, 
-  #            db_compute_spl(dt = dt_lineup_median, 
-  #                           ppp_year = py)
-  #            ),
-  # 
-  # ### Get SPL headcount -------
-  # tar_target(dt_spl_headcount, 
-  #            db_compute_lineup_headcount(
-  #              ref_lkup = dt_prod_ref_estimation, 
-  #              cache    = cache, 
-  #              spl      = dt_spl)),
-  
+ 
   ## Coverage and censoring table -------
   
   ### coverage table by region ----
@@ -303,7 +284,8 @@ list(
       incgrp_table          = dl_aux$income_groups, 
       ref_years             = gls$PIP_REF_YEARS,
       urban_rural_countries = c("ARG", "CHN", "IND", "SUR"),
-      digits                = 2
+      digits                = 2,
+      gls                   = gls
     )
   ),
   
@@ -703,6 +685,16 @@ list(
     save_estimations(dt       = dt_ref_mean_pred, 
                      dir      = gls$OUT_AUX_DIR_PC, 
                      name     = "interpolated_means", 
+                     time     = gls$TIME, 
+                     compress = gls$FST_COMP_LVL)
+  ),
+  
+  tar_target(
+    metaregion_file_aux,
+    format = 'file', 
+    save_estimations(dt       = dl_aux$metaregion, 
+                     dir      = gls$OUT_AUX_DIR_PC, 
+                     name     = "metaregion", 
                      time     = gls$TIME, 
                      compress = gls$FST_COMP_LVL)
   ),
