@@ -16,6 +16,9 @@ wb535623:
   out_dir: !expr if (Sys.info()['nodename'] == "WBGMSDDG001") 
                     fs::path(s_path, my_out_path) 
                     else fs::path(l_path, my_out_path)
+  tar_dir: !expr if (Sys.info()['nodename'] == "WBGMSDDG001") 
+                    fs::path(s_path, my_tar_path) 
+                    else fs::path(l_path, my_tar_path)
 
 wb622077:
   my_pipe_path: "01.personal/wb622077/pip_ingestion_pipeline"

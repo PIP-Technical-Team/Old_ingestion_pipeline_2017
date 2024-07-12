@@ -84,7 +84,7 @@ source("_common_SAC.R", echo = FALSE)
 base_dir |> 
   fs::path("_cache_loading_saving.R") |> 
   source(echo = FALSE)
-
+ 
 ## Set targets options   ---------
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Check that the correct _targets store is used 
@@ -94,9 +94,9 @@ base_dir |>
 #   stop('The store specified in _targets.yaml doesn\'t match with the pipeline directory')
 # }
 
-tar_config_set(
-  store = config$my_tar_path
-  )
+# tar_config_set(
+#   store = config$tar_dir
+#   )
 
 # filter for testing --------
 
