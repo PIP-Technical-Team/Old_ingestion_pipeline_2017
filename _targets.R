@@ -33,7 +33,7 @@ branch             <- "DEV"
 release            <- "20240627"
 #identity           <- "INT"
 #identity           <- "PROD"
-identity           <- "DEV"
+identity           <- "TEST"
 max_year_country   <- 2023
 max_year_aggregate <- 2024
 max_year_lineup    <- 2022
