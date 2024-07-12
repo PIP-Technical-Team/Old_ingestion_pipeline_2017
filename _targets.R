@@ -29,10 +29,11 @@
 py                 <- 2017  # PPP year
 #branch             <- "main"
 branch             <- "DEV"
-release            <- "20240429"
-#release            <- "20240627"
-identity           <- "INT"
-identity           <- "PROD"
+#release            <- "20240429"
+release            <- "20240627"
+#identity           <- "INT"
+#identity           <- "PROD"
+identity           <- "DEV"
 max_year_country   <- 2023
 max_year_aggregate <- 2024
 max_year_lineup    <- 2022
@@ -96,11 +97,6 @@ base_dir |>
 tar_config_set(
   store = config$my_tar_path
   )
-
-# if (!identical(fs::path(tar_config_get('store')),
-#                fs::path(gls$PIP_PIPE_DIR, 'pc_data/_targets2017'))) {
-#   stop('The store specified in _targets.yaml doesn\'t match with the pipeline directory')
-# }
 
 # filter for testing --------
 
