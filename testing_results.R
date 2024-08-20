@@ -58,10 +58,6 @@ ctr <- "all"
 pl <- 2.15
 
 
-
-
-
-
 pip1_cl   <- pipr::get_stats(povline = pl)
 setDT(pip1_cl)
 
@@ -71,7 +67,7 @@ pip2_cl   <- pipapi::pip(country = ctr,
                      lkup = lkup,
                      povline = pl)
 setnames(pip2_cl, "reporting_year", "year")
-setorderv(pip2_cl,  c("country_code", "reporting_level", "year"))
+setorderv(pip2_cl,  c("country_code", "year", "reporting_level"))
 
  
 x <- "headcount"
@@ -87,9 +83,7 @@ lapply(x, \(.) {
 })
 
 
-
-
-
+rf <- lkup$ref_lkup |> copy()
 
 
 
@@ -123,6 +117,15 @@ pip2   <- pipapi::pip(country = ctr,
                       lkup = lkup, 
                       povline = pl)  |> 
   setorder(country_code, reporting_year, reporting_level, welfare_type)
+
+
+nga <- pipapi::pip(country = "NGA",
+                   fill_gaps = TRUE,
+                   lkup = lkup, 
+                   povline = 3.65)  |> 
+  setorder(country_code, reporting_year, reporting_level, welfare_type)
+
+
 
 pip2cy   <- pipapi::pip(country = ctr,
                       fill_gaps = FALSE,
