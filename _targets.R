@@ -29,13 +29,13 @@
 py                 <- 2017  # PPP year
 branch             <- "main"
 branch             <- "DEV"
-release            <- "20240326"
 release            <- "20240627"
+release            <- "20250401"
 identity           <- "INT"
 identity           <- "PROD"
 max_year_country   <- 2023
-max_year_aggregate <- 2024
-max_year_lineup    <- 2022
+max_year_aggregate <- 2025
+max_year_lineup    <- 2023
 
 ## filter creation of synth data
 cts <- yrs <- NULL
@@ -44,7 +44,7 @@ cts <- yrs <- NULL
 force_create_cache_file         <- FALSE
 save_pip_update_cache_inventory <- FALSE
 force_gd_2_synth                <- FALSE
-save_mp_cache                   <- FALSE
+save_mp_cache                   <- TRUE
 
 
 base_dir <- fs::path("e:/PovcalNet/01.personal/wb384996/PIP/pip_ingestion_pipeline")
@@ -221,7 +221,7 @@ list(
       cl_table              = dl_aux$country_list,
       incgrp_table          = dl_aux$income_groups, 
       ref_years             = gls$PIP_REF_YEARS,
-      urban_rural_countries = c("ARG", "CHN", "IND", "SUR"),
+      urban_rural_countries = c("ARG", "CHN", "SUR"),
       digits                = 2,
       gls                   = gls
     )
