@@ -42,7 +42,7 @@ cts <- yrs <- NULL
 
 ## save data
 force_create_cache_file         <- FALSE
-save_pip_update_cache_inventory <- FALSE
+save_pip_update_cache_inventory <- TRUE
 force_gd_2_synth                <- FALSE
 save_mp_cache                   <- FALSE
 
@@ -222,7 +222,7 @@ list(
       cl_table              = dl_aux$country_list,
       incgrp_table          = dl_aux$income_groups,
       ref_years             = gls$PIP_REF_YEARS,
-      urban_rural_countries = c("ARG", "CHN", "SUR"),
+      urban_rural_countries = c("ARG", "CHN"),
       digits                = 2,
       gls                   = gls
     )
@@ -643,11 +643,11 @@ list(
   tar_target(
     data_timestamp_file,
     # format = 'file',
-    writeLines(as.character(Sys.time()),
-               fs::path(gls$OUT_DIR_PC,
-                        gls$vintage_dir,
-                        "data_update_timestamp",
-                        ext = "txt"))
+      writeLines(as.character(Sys.time()),
+                 fs::path(gls$OUT_DIR_PC,
+                          gls$vintage_dir,
+                          "data_update_timestamp",
+                          ext = "txt"))
   ),
   
   ## Convert AUX files  to qs ---------
