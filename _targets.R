@@ -29,8 +29,8 @@
 py                 <- 2017  # PPP year
 branch             <- "main"
 branch             <- "DEV"
-release            <- "20240627"
 release            <- "20250401"
+release            <- "20250930"
 identity           <- "INT"
 identity           <- "PROD"
 max_year_country   <- 2023
@@ -42,7 +42,7 @@ cts <- yrs <- NULL
 
 ## save data
 force_create_cache_file         <- FALSE
-save_pip_update_cache_inventory <- TRUE
+save_pip_update_cache_inventory <- FALSE
 force_gd_2_synth                <- FALSE
 save_mp_cache                   <- FALSE
 
@@ -53,16 +53,16 @@ base_dir <- fs::path("e:/PovcalNet/01.personal/wb384996/PIP/pip_ingestion_pipeli
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Load packages
-withr::with_dir(new = base_dir, 
+withr::with_dir(new = base_dir,
                 code = {
                   # source("./_packages.R")
                   
                   # Load R files
-                  purrr::walk(fs::dir_ls(path = "./R", 
+                  purrr::walk(fs::dir_ls(path = "./R",
                                          regexp = "\\.R$"), source)
                   
                   # Read pipdm functions
-                  purrr::walk(fs::dir_ls(path = "./R/pipdm/R", 
+                  purrr::walk(fs::dir_ls(path = "./R/pipdm/R",
                                          regexp = "\\.R$"), source)
                 })
 
@@ -70,22 +70,28 @@ withr::with_dir(new = base_dir,
 ## Run common R code   ---------
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-base_dir |> 
-  fs::path("_common.R") |> 
+base_dir |>
+  fs::path("_common.R") |>
   source(echo = FALSE)
 
-base_dir |> 
-  fs::path("_cache_loading_saving.R") |> 
-  source(echo = FALSE)
-  
+# debugonce(from_gd_2_synth)
+# debugonce(find_new_svy_data)
+# base_dir |>
+#   fs::path("_cache_loading_saving.R") |>
+#   source(echo = FALSE)
+
+# pipeline_inventory <-
+#   pipeline_inventory[module  != "PC-GROUP"]
+
+
 
 
 ## Set targets options   ---------
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Check that the correct _targets store is used 
+# Check that the correct _targets store is used
 
 if (!identical(fs::path(tar_config_get('store')),
-               fs::path(gls$PIP_PIPE_DIR, 'pc_data/_targets2017'))) {
+               fs::path(gls$PIP_PIPE_DIR, 'pc_data/_targets2021'))) {
   stop('The store specified in _targets.yaml doesn\'t match with the pipeline directory')
 }
 
@@ -96,8 +102,105 @@ if (!identical(fs::path(tar_config_get('store')),
 # Step 2: Run pipeline   ---------
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
 list(
+  # AUX data ------------------
+  
+  tar_target(aux_tb,
+             prep_aux_data(maindir = gls$PIP_DATA_DIR,
+                           branch  = branch)),
+  
+  # Load aux data
+  tar_target(dl_aux1,
+             load_aux_data(aux_tb),
+             cue = tar_cue(mode = "always") ),
+  
+  # format data
+  tar_target(dl_aux,
+             format_aux_data(dl_aux1, py)),
+  
+  tar_target(aux_versions,
+             get_aux_versions(dl_aux)),
+  
+  # CACHE data ------------
+  
+  # Load PIP inventory
+  tar_target(pip_inventory_file,
+             fs::path(gls$PIP_DATA_DIR, '_inventory/inventory.fst'),
+             format = "file"),
+  
+  tar_target(pip_inventory,
+             load_pip_inventory(pip_inventory_file)),
+  
+  # Load PIPELINE inventory file
+  tar_target(pipeline_inventory,
+             db_filter_inventory(dt        = pip_inventory,
+                                 pfw_table = dl_aux$pfw) |>
+               _[module  != "PC-GROUP"]),
+  
+  
+  # Create microdata cache files
+  tar_target(status_cache_files_creation,
+             create_cache_file(
+               pipeline_inventory = pipeline_inventory,
+               pip_data_dir       = gls$PIP_DATA_DIR,
+               tool               = "PC",
+               cache_svy_dir      = gls$CACHE_SVY_DIR_PC,
+               compress           = gls$FST_COMP_LVL,
+               force              = force_create_cache_file,
+               verbose            = TRUE,
+               cpi_table          = dl_aux$cpi,
+               ppp_table          = dl_aux$ppp,
+               pfw_table          = dl_aux$pfw,
+               pop_table          = dl_aux$pop)),
+  
+  # Create synthetic cache files
+  tar_target(pipeline_inventory2,
+             from_gd_2_synth(dl_aux             = dl_aux,
+                             gls                = gls,
+                             pipeline_inventory = pipeline_inventory,
+                             force              = force_gd_2_synth,
+                             cts                = cts,
+                             yrs                = yrs)),
+  tar_target(cache_inventory1,
+             pip_update_cache_inventory(
+               pipeline_inventory = pipeline_inventory2,
+               pip_data_dir       = gls$PIP_DATA_DIR,
+               cache_svy_dir      = gls$CACHE_SVY_DIR_PC,
+               tool               = "PC",
+               save               = save_pip_update_cache_inventory,
+               load               = TRUE,
+               verbose            = TRUE
+             )),
+  
+  # cache IDs
+  tar_target(cache_ppp, gls$cache_ppp),
+  
+  # filter cache inventory with PFW
+  tar_target(cache_inventory,
+             filter_cache_inventory(cache_inventory1, dl_aux)),
+  
+  
+  tar_target(cache_ids,
+             get_cache_id(cache_inventory)),
+  tar_files(cache_dir,
+            get_cache_files(cache_inventory) |>
+              setNames(cache_ids)),
+  
+  
+  # create cache global list
+  tar_target(cache_file,
+             create_cache(cache_dir = cache_dir,
+                          cache_ids = cache_ids,
+                          save = FALSE,
+                          gls = gls,
+                          cache_ppp = cache_ppp),
+             format = "file"),
+  
+  # Load cache file
+  tar_target(cache,
+             load_cache(cache_file)),
+  tar_target(assert_cache_length,
+             tar_cancel(length(cache) == length(cache_dir))),
   
   ## Mean estimates ------------
   
@@ -315,7 +418,7 @@ list(
              pattern   = map(aux_clean, aux_out_files),
              iteration = "list"),
   
-  tar_files(aux_out_dir, aux_out_files),
+  # tar_files(aux_out_dir, aux_out_files),
   
   ### Additional AUX files ----
   
@@ -327,7 +430,7 @@ list(
       fs::path(gls$OUT_AUX_DIR_PC, "countries.fst"),
       compress = TRUE
     ),
-    format = 'file',
+    format = 'file'
   ),
   
   #### Countries with missing data ------------
@@ -338,7 +441,7 @@ list(
       fs::path(gls$OUT_AUX_DIR_PC, "missing_data.fst"),
       compress = TRUE
     ),
-    format = 'file',
+    format = 'file'
   ),
   
   #### Country List ---------
@@ -349,7 +452,7 @@ list(
       fs::path(gls$OUT_AUX_DIR_PC, "country_list.fst"),
       compress = TRUE
     ),
-    format = 'file',
+    format = 'file'
   ),
   
   #### Regions -----------
@@ -360,7 +463,7 @@ list(
       fs::path(gls$OUT_AUX_DIR_PC, "regions.fst"),
       compress = TRUE
     ),
-    format = 'file',
+    format = 'file'
   ),
   
   #### Country profiles  ------------
@@ -371,7 +474,7 @@ list(
       fs::path(gls$OUT_AUX_DIR_PC, "country_profiles.rds"),
       compress = TRUE
     ),
-    format = 'file',
+    format = 'file'
   ),
   
   #### Poverty lines ---------
@@ -382,7 +485,7 @@ list(
       fs::path(gls$OUT_AUX_DIR_PC, "poverty_lines.fst"),
       compress = TRUE
     ),
-    format = 'file',
+    format = 'file'
   ),
   
   tar_target(
@@ -392,7 +495,7 @@ list(
       fs::path(gls$OUT_AUX_DIR_PC, "national_poverty_lines.fst"),
       compress = TRUE
     ),
-    format = 'file',
+    format = 'file'
   ),
   
   #### Survey metadata (for Data Sources page) --------
@@ -403,7 +506,7 @@ list(
       fs::path(gls$OUT_AUX_DIR_PC, "survey_metadata.rds"),
       compress = TRUE
     ),
-    format = 'file',
+    format = 'file'
   ),
   
   #### Indicators ----------
@@ -414,7 +517,7 @@ list(
       fs::path(gls$OUT_AUX_DIR_PC, "indicators.fst"),
       compress = TRUE
     ),
-    format = 'file',
+    format = 'file'
   ),
   
   
@@ -428,7 +531,7 @@ list(
       fs::path(gls$OUT_AUX_DIR_PC, "pop_region.fst"),
       compress = TRUE
     ),
-    format = 'file',
+    format = 'file'
   ),
   
   #### Regional coverage  ----------
@@ -439,7 +542,7 @@ list(
       fs::path(gls$OUT_AUX_DIR_PC, "region_coverage.fst"),
       compress = TRUE
     ),
-    format = 'file',
+    format = 'file'
   ),
   
   #### Income group coverage ---------
@@ -450,7 +553,7 @@ list(
       fs::path(gls$OUT_AUX_DIR_PC, "incgrp_coverage.fst"),
       compress = TRUE
     ),
-    format = 'file',
+    format = 'file'
   ),
   
   #### Country year coverage --------
@@ -470,7 +573,7 @@ list(
       fs::path(gls$OUT_AUX_DIR_PC, "censored.rds"),
       compress = TRUE
     ),
-    format = 'file',
+    format = 'file'
   ),
   
   
@@ -482,7 +585,7 @@ list(
       fs::path(gls$OUT_AUX_DIR_PC, "decomposition.fst"),
       compress = TRUE
     ),
-    format = 'file',
+    format = 'file'
   ),
   
   #### Framework data --------------
@@ -493,7 +596,7 @@ list(
       fs::path(gls$OUT_AUX_DIR_PC, "framework.fst"),
       compress = TRUE
     ),
-    format = 'file',
+    format = 'file'
   ),
   
   ### Dictionary -------------
@@ -504,7 +607,7 @@ list(
       fs::path(gls$OUT_AUX_DIR_PC, "dictionary.fst"),
       compress = TRUE
     ),
-    format = 'file',
+    format = 'file'
   ),
   
   ### SPL  --------------
@@ -522,22 +625,22 @@ list(
   
   tar_target(
     prod_ref_estimation_file,
-    format = 'file',
     save_estimations(dt       = dt_prod_ref_estimation,
                      dir      = gls$OUT_EST_DIR_PC,
                      name     = "prod_ref_estimation",
                      time     = gls$TIME,
-                     compress = gls$FST_COMP_LVL)
+                     compress = gls$FST_COMP_LVL),
+    format = 'file'
   ),
   
   tar_target(
     prod_svy_estimation_file,
-    format = 'file',
     save_estimations(dt       = dt_prod_svy_estimation,
                      dir      = gls$OUT_EST_DIR_PC,
                      name     = "prod_svy_estimation",
                      time     = gls$TIME,
-                     compress = gls$FST_COMP_LVL)
+                     compress = gls$FST_COMP_LVL),
+    format = 'file'
   ),
   
   # tar_target(
@@ -559,83 +662,83 @@ list(
       fs::path(gls$OUT_AUX_DIR_PC, "lorenz.rds"),
       compress = TRUE
     ),
-    format = 'file',
+    format = 'file'
   ),
   
   ### Dist stats table ----
   
   tar_target(
     dist_file,
-    format = 'file',
     save_estimations(dt       = dt_dist_stats,
                      dir      = gls$OUT_EST_DIR_PC,
                      name     = "dist_stats",
                      time     = gls$TIME,
-                     compress = gls$FST_COMP_LVL)
+                     compress = gls$FST_COMP_LVL),
+    format = 'file'
   ),
   
   ### Survey means table ----
   
   tar_target(
     survey_mean_file,
-    format = 'file',
     save_estimations(dt       = svy_mean_ppp_table,
                      dir      = gls$OUT_EST_DIR_PC,
                      name     = "survey_means",
                      time     = gls$TIME,
-                     compress = gls$FST_COMP_LVL)
+                     compress = gls$FST_COMP_LVL),
+    format = 'file'
   ),
   
   tar_target(
     survey_mean_file_aux,
-    format = 'file',
     save_estimations(dt       = svy_mean_ppp_table,
                      dir      = gls$OUT_AUX_DIR_PC,
                      name     = "survey_means",
                      time     = gls$TIME,
-                     compress = gls$FST_COMP_LVL)
+                     compress = gls$FST_COMP_LVL),
+    format = 'file'
   ),
   
   tar_target(
     aux_versions_out,
-    format = 'file',
     save_estimations(dt       = aux_versions,
                      dir      = gls$OUT_AUX_DIR_PC,
                      name     = "aux_versions",
                      time     = gls$TIME,
-                     compress = gls$FST_COMP_LVL)
+                     compress = gls$FST_COMP_LVL),
+    format = 'file'
   ),
   
   ### Interpolated means table ----
   
   tar_target(
     interpolated_means_file,
-    format = 'file',
     save_estimations(dt       = dt_ref_mean_pred,
                      dir      = gls$OUT_EST_DIR_PC,
                      name     = "interpolated_means",
                      time     = gls$TIME,
-                     compress = gls$FST_COMP_LVL)
+                     compress = gls$FST_COMP_LVL),
+    format = 'file'
   ),
   
   tar_target(
     interpolated_means_file_aux,
-    format = 'file',
     save_estimations(dt       = dt_ref_mean_pred,
                      dir      = gls$OUT_AUX_DIR_PC,
                      name     = "interpolated_means",
                      time     = gls$TIME,
-                     compress = gls$FST_COMP_LVL)
+                     compress = gls$FST_COMP_LVL),
+    format = 'file'
   ),
   ### Metaregion --------------
   tar_target(
     metaregion_file_aux,
-    format = 'file',
     save_estimations(dt       = dl_aux$metaregion,
                      dir      = gls$OUT_AUX_DIR_PC,
                      name     = "metaregion",
                      time     = gls$TIME,
-                     compress = gls$FST_COMP_LVL)
+                     compress = gls$FST_COMP_LVL),
+    format = 'file'
   ),
   
   ### Data timestamp file ----
@@ -643,11 +746,11 @@ list(
   tar_target(
     data_timestamp_file,
     # format = 'file',
-      writeLines(as.character(Sys.time()),
-                 fs::path(gls$OUT_DIR_PC,
-                          gls$vintage_dir,
-                          "data_update_timestamp",
-                          ext = "txt"))
+    writeLines(as.character(Sys.time()),
+               fs::path(gls$OUT_DIR_PC,
+                        gls$vintage_dir,
+                        "data_update_timestamp",
+                        ext = "txt"))
   ),
   
   ## Convert AUX files  to qs ---------
@@ -656,5 +759,7 @@ list(
     convert_to_qs(dir = gls$OUT_AUX_DIR_PC),
     cue = tar_cue(mode = "always")
   )
+  
+  
 )
 
