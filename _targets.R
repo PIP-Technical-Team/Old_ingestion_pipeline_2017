@@ -91,7 +91,7 @@ base_dir |>
 # Check that the correct _targets store is used
 
 if (!identical(fs::path(tar_config_get('store')),
-               fs::path(gls$PIP_PIPE_DIR, 'pc_data/_targets2021'))) {
+               fs::path(gls$PIP_PIPE_DIR, 'pc_data/_targets2017'))) {
   stop('The store specified in _targets.yaml doesn\'t match with the pipeline directory')
 }
 
