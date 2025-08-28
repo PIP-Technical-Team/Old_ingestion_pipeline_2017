@@ -33,9 +33,9 @@ release            <- "20250401"
 release            <- "20250930"
 identity           <- "INT"
 identity           <- "PROD"
-max_year_country   <- 2023
+max_year_country   <- 2024
 max_year_aggregate <- 2025
-max_year_lineup    <- 2023
+max_year_lineup    <- 2024
 
 ## filter creation of synth data
 cts <- yrs <- NULL
@@ -91,7 +91,7 @@ base_dir |>
 # Check that the correct _targets store is used
 
 if (!identical(fs::path(tar_config_get('store')),
-               fs::path(gls$PIP_PIPE_DIR, 'pc_data/_targets2017'))) {
+               fs::path(gls$PIP_PIPE_DIR, 'pc_data/_targets2021'))) {
   stop('The store specified in _targets.yaml doesn\'t match with the pipeline directory')
 }
 
@@ -253,7 +253,7 @@ list(
   #              pop_table = dl_aux$pop,
   #              ref_years = gls$PIP_REF_YEARS,
   #              pip_years = gls$PIP_YEARS,
-  #              region_code = 'pcn_region_code')),
+  #              region_code = 'region_code')),
   
   tar_target(dt_ref_mean_pred,
              refy_mean_inc_group(dsm    = svy_mean_ppp_table,
@@ -351,7 +351,7 @@ list(
     db_create_reg_pop_table(
       pop_table   = dl_aux$pop,
       cl_table    = dl_aux$country_list,
-      region_code = 'pcn_region_code',
+      region_code = 'region_code',
       pip_years   = gls$PIP_REF_YEARS)
   ),
   
