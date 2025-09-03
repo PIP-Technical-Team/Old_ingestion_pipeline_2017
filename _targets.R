@@ -91,7 +91,7 @@ base_dir |>
 # Check that the correct _targets store is used
 
 if (!identical(fs::path(tar_config_get('store')),
-               fs::path(gls$PIP_PIPE_DIR, 'pc_data/_targets2021'))) {
+               fs::path(gls$PIP_PIPE_DIR, 'pc_data/_targets2017'))) {
   stop('The store specified in _targets.yaml doesn\'t match with the pipeline directory')
 }
 
@@ -190,10 +190,15 @@ list(
   # create cache global list
   tar_target(cache_file,
              create_cache(cache_dir = cache_dir,
-                          cache_ids = cache_ids,
-                          save = FALSE,
                           gls = gls,
                           cache_ppp = cache_ppp),
+             format = "file"),
+  
+  # create cache global list inventory
+  tar_target(global_cache_inv,
+             update_global_cache_inv(cache_dir = cache_dir,
+                                     gls = gls,
+                                     cache_ppp = cache_ppp),
              format = "file"),
   
   # Load cache file
@@ -259,7 +264,7 @@ list(
              refy_mean_inc_group(dsm    = svy_mean_ppp_table,
                                  gls    = gls,
                                  dl_aux = dl_aux,
-                                 pinv   = pipeline_inventory)),
+                                 pinv   = pipeline_inventory2)),
   # tar_target(dt_ref_mean_pred,
   #            get_ref_mean_pred(old    = dt_old_ref_mean_pred,
   #                              new    = dt_refy_mean_inc_group)),
@@ -388,7 +393,7 @@ list(
   # Create Framework data
   tar_target(
     dt_framework,
-    create_framework(dl_aux$pfw)
+    (dl_aux$pfw)
   ),
   
   #~~~~~~~~~~~~~~~~~~~~~~
