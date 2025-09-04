@@ -124,18 +124,33 @@ list(
   # CACHE data ------------
   
   # Load PIP inventory
-  tar_target(pip_inventory_file,
-             fs::path(gls$PIP_DATA_DIR, '_inventory/inventory.fst'),
-             format = "file"),
+  # tar_target(pip_inventory_file,
+  #            fs::path(gls$PIP_DATA_DIR, '_inventory/inventory.fst'),
+  #            format = "file"),
+  #
+  # tar_target(pip_inventory,
+  #            load_pip_inventory(pip_inventory_file)),
+  #
+  # # Load PIPELINE inventory file
+  # tar_target(pipeline_inventory,
+  #            db_filter_inventory(dt        = pip_inventory,
+  #                                pfw_table = dl_aux$pfw) |>
+  #              _[module  != "PC-GROUP"]),
+  #
+  # tar_target(dta_paths,
+  #            as.character(pipeline_inventory$orig)),
   
-  tar_target(pip_inventory,
-             load_pip_inventory(pip_inventory_file)),
+  tar_files_input(orig_dta_files,
+                  dta_paths),
   
-  # Load PIPELINE inventory file
-  tar_target(pipeline_inventory,
-             db_filter_inventory(dt        = pip_inventory,
-                                 pfw_table = dl_aux$pfw) |>
-               _[module  != "PC-GROUP"]),
+  tar_target(cache_id_in_inventory,
+             get_cache_id(pipeline_inventory)),
+  
+  tar_target(old_cache_id_deleted,
+             delete_old_cache_id(orig_dta_files,
+                                 cache_id_in_inventory,
+                                 gls),
+             pattern = map(orig_dta_files, cache_id_in_inventory)),
   
   
   # Create microdata cache files
@@ -183,8 +198,8 @@ list(
   tar_target(cache_ids,
              get_cache_id(cache_inventory)),
   tar_files(cache_dir,
-            get_cache_files(cache_inventory) |>
-              setNames(cache_ids)),
+            get_cache_files(cache_inventory),
+            cue = tar_cue(mode = "always")),
   
   
   # create cache global list
@@ -764,7 +779,6 @@ list(
     convert_to_qs(dir = gls$OUT_AUX_DIR_PC),
     cue = tar_cue(mode = "always")
   )
-  
   
 )
 
