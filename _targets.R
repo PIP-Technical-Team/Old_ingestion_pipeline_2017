@@ -202,8 +202,7 @@ list(
   tar_target(cache_ids,
              get_cache_id(cache_inventory)),
   tar_files(cache_dir,
-            get_cache_files(cache_inventory),
-            cue = tar_cue(mode = "always")),
+            get_cache_files(cache_inventory)),
   
   
   # create cache global list
@@ -213,13 +212,7 @@ list(
                           cache_ppp = cache_ppp),
              format = "file"),
   
-  # create cache global list inventory
-  tar_target(global_cache_inv,
-             update_global_cache_inv(cache_dir = cache_dir,
-                                     gls = gls,
-                                     cache_ppp = cache_ppp),
-             format = "file"),
-  
+
   # Load cache file
   tar_target(cache,
              load_cache(cache_file)),

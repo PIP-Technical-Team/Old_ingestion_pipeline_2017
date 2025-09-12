@@ -44,9 +44,10 @@ if (requireNamespace("pushoverr", quietly = TRUE)) {
         
         d <- f - s
         
-        msg <- paste0("Finished pipeline. \nStarted at ", start,
+        msg <- paste0("SUCCESS in pipeline. \nStarted at ", start,
                       "\nFinished at ", finish,
                       "\nDifference ", d)
+        tar_load_globals()
         
         sync_status <- syncdr::compare_directories(
           left_path  = fs::path(gls$OUT_DIR_PC, gls$vintage_dir),
@@ -67,7 +68,10 @@ if (requireNamespace("pushoverr", quietly = TRUE)) {
           copy_to_right   = TRUE,
           delete_in_right = TRUE,
           exclude_delete  = c("cache.duckdb", # file
-                              "lineup_data"),  # folder,
+                              "lineup_data", # folder
+                              "prod_refy_estimation.fst",
+                              "lineup_dist_stats.fst", 
+                              "lineup_years.fst"),
           force           = TRUE,
           #backup          = FALSE,
           verbose         = FALSE)
