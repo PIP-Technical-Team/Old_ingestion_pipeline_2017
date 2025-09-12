@@ -33,21 +33,89 @@ if (requireNamespace("pushoverr", quietly = TRUE)) {
     # names <- rlang::enquo(names)
     s     <- Sys.time()
     start <-  format(s, "%H:%M")
-    try(tar_make(...))
     
-    f      <- Sys.time()
-    finish <- format(f, "%H:%M")
+    tryCatch(
+      expr = {
+        # Your code...
+        tar_make(...)
+        
+        f      <- Sys.time()
+        finish <- format(f, "%H:%M")
+        
+        d <- f - s
+        
+        msg <- paste0("Finished pipeline. \nStarted at ", start,
+                      "\nFinished at ", finish,
+                      "\nDifference ", d)
+        
+        sync_status <- syncdr::compare_directories(
+          left_path  = fs::path(gls$OUT_DIR_PC, gls$vintage_dir),
+          right_path = fs::path("e:/PIP/pipapi_data", gls$vintage_dir) |>
+            fs::dir_create(),
+          by_date    = TRUE,
+          by_content = FALSE,
+          verbose    = FALSE,
+          recurse    = TRUE)
+        
+        sync_common_files <- syncdr::common_files_asym_sync_to_right(
+          sync_status = sync_status,
+          force       = TRUE,
+          verbose     = FALSE)
+        
+        sync_uncommon_files <- syncdr::update_missing_files_asym_to_right(
+          sync_status     = sync_status,
+          copy_to_right   = TRUE,
+          delete_in_right = TRUE,
+          exclude_delete  = c("cache.duckdb", # file
+                              "lineup_data"),  # folder,
+          force           = TRUE,
+          #backup          = FALSE,
+          verbose         = FALSE)
+        TRUE
+      }, # end of expr section
+      
+      error = function(e) {
+        f      <- Sys.time()
+        finish <- format(f, "%H:%M")
+        
+        d <- f - s
+        
+        msg <- paste0("ERROR in pipeline. \nStarted at ", start,
+                      "\nFinished at ", finish,
+                      "\nDifference ", d)
+        
+      }, # end of error section
+      
+      warning = function(w) {
+        f      <- Sys.time()
+        finish <- format(f, "%H:%M")
+        
+        d <- f - s
+        
+        msg <- paste0("WARNING in pipeline. \nStarted at ", start,
+                      "\nFinished at ", finish,
+                      "\nDifference ", d)
+        
+      }, # end of warning section
+      
+      finally = {
+        pushoverr::pushover(msg)
+        cli::cli_alert(msg)
+      } # end of finally section
+      
+    ) # End of trycatch
     
-    d <- f - s
     
-    msg <- paste0("Finished pipeline. \nStarted at ", start, 
-                  "\nFinished at ", finish, 
-                  "\nDifference ", d)
-    pushoverr::pushover(msg)
-    cli::cli_alert(msg)
     
     return(invisible(TRUE))
   }
   
+}
+
+
+# ---- Tiny helpers (expose a few, keep rest optional) ----
+if (Sys.info()[["user"]] == "wb384996") {
+  tdirp <- fs::path("p:/02.personal/wb384996/temporal/R/")
+  tdire <- fs::path("E:/PovcalNet/01.personal/wb384996/temp/R")
 }
 

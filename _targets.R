@@ -124,33 +124,36 @@ list(
   # CACHE data ------------
   
   # Load PIP inventory
-  # tar_target(pip_inventory_file,
-  #            fs::path(gls$PIP_DATA_DIR, '_inventory/inventory.fst'),
-  #            format = "file"),
-  #
-  # tar_target(pip_inventory,
-  #            load_pip_inventory(pip_inventory_file)),
-  #
-  # # Load PIPELINE inventory file
-  # tar_target(pipeline_inventory,
-  #            db_filter_inventory(dt        = pip_inventory,
-  #                                pfw_table = dl_aux$pfw) |>
-  #              _[module  != "PC-GROUP"]),
-  #
+  tar_target(pip_inventory_file,
+             fs::path(gls$PIP_DATA_DIR, '_inventory/inventory.fst'),
+             format = "file"),
+  
+  tar_target(pip_inventory,
+             load_pip_inventory(pip_inventory_file)),
+  
+  # Load PIPELINE inventory file
+  tar_target(pipeline_inventory,
+             db_filter_inventory(dt        = pip_inventory,
+                                 pfw_table = dl_aux$pfw) |>
+               _[module  != "PC-GROUP"]),
+  
   # tar_target(dta_paths,
   #            as.character(pipeline_inventory$orig)),
   
-  tar_files_input(orig_dta_files,
-                  dta_paths),
+  tar_target(fs_status,
+             check_fs_status(
+               dir_path = fs::path(gls$CACHE_SVY_DIR_PC),
+               fs_paths = as.character(pipeline_inventory$orig)),
+             cue = tar_cue(mode = "always")
+  ),
   
-  tar_target(cache_id_in_inventory,
-             get_cache_id(pipeline_inventory)),
+  # tar_files_input(orig_dta_files,
+  #                 dta_paths),
   
   tar_target(old_cache_id_deleted,
-             delete_old_cache_id(orig_dta_files,
-                                 cache_id_in_inventory,
-                                 gls),
-             pattern = map(orig_dta_files, cache_id_in_inventory)),
+             delete_old_cache_id(fs_status = fs_status,
+                                 pipeline_inventory = pipeline_inventory,
+                                 gls)),
   
   
   # Create microdata cache files
@@ -166,7 +169,8 @@ list(
                cpi_table          = dl_aux$cpi,
                ppp_table          = dl_aux$ppp,
                pfw_table          = dl_aux$pfw,
-               pop_table          = dl_aux$pop)),
+               pop_table          = dl_aux$pop),
+             cue = tar_cue(mode = "always")),
   
   # Create synthetic cache files
   tar_target(pipeline_inventory2,
@@ -762,11 +766,15 @@ list(
   ),
   
   ### Data timestamp file ----
+  tar_target(run_time,
+             as.character(Sys.time()),
+             cue = tar_cue(mode = "always")
+  ),
   
   tar_target(
     data_timestamp_file,
     # format = 'file',
-    writeLines(as.character(Sys.time()),
+    writeLines(run_time,
                fs::path(gls$OUT_DIR_PC,
                         gls$vintage_dir,
                         "data_update_timestamp",
@@ -779,6 +787,5 @@ list(
     convert_to_qs(dir = gls$OUT_AUX_DIR_PC),
     cue = tar_cue(mode = "always")
   )
-  
 )
 
