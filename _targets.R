@@ -42,7 +42,7 @@ cts <- yrs <- NULL
 
 ## save data
 force_create_cache_file         <- FALSE
-save_pip_update_cache_inventory <- FALSE
+save_pip_update_cache_inventory <- TRUE
 force_gd_2_synth                <- FALSE
 save_mp_cache                   <- FALSE
 
@@ -143,7 +143,8 @@ list(
   tar_target(fs_status,
              check_fs_status(
                dir_path = fs::path(gls$CACHE_SVY_DIR_PC),
-               fs_paths = as.character(pipeline_inventory$orig)),
+               fs_paths = as.character(pipeline_inventory$orig),
+               name = "fs_status"),
              cue = tar_cue(mode = "always")
   ),
   
@@ -201,18 +202,28 @@ list(
   
   tar_target(cache_ids,
              get_cache_id(cache_inventory)),
-  tar_files(cache_dir,
-            get_cache_files(cache_inventory)),
+  tar_target(cache_dir,
+             get_cache_files(cache_inventory)),
+  
+  tar_target(cache_status,
+             check_fs_status(
+               dir_path = fs::path(gls$CACHE_SVY_DIR_PC),
+               fs_paths = as.character(cache_dir),
+               name = "cache_status"),
+             cue = tar_cue(mode = "always")
+  ),
   
   
   # create cache global list
   tar_target(cache_file,
              create_cache(cache_dir = cache_dir,
                           gls = gls,
-                          cache_ppp = cache_ppp),
+                          cache_ppp = cache_ppp,
+                          cache_status = cache_status,
+                          force = TRUE),
              format = "file"),
   
-
+  
   # Load cache file
   tar_target(cache,
              load_cache(cache_file)),

@@ -34,7 +34,7 @@ if (requireNamespace("pushoverr", quietly = TRUE)) {
     s     <- Sys.time()
     start <-  format(s, "%H:%M")
     
-    tryCatch(
+    msg <- tryCatch(
       expr = {
         # Your code...
         tar_make(...)
@@ -47,6 +47,7 @@ if (requireNamespace("pushoverr", quietly = TRUE)) {
         msg <- paste0("SUCCESS in pipeline. \nStarted at ", start,
                       "\nFinished at ", finish,
                       "\nDifference ", d)
+        
         tar_load_globals()
         
         sync_status <- syncdr::compare_directories(
@@ -66,16 +67,15 @@ if (requireNamespace("pushoverr", quietly = TRUE)) {
         sync_uncommon_files <- syncdr::update_missing_files_asym_to_right(
           sync_status     = sync_status,
           copy_to_right   = TRUE,
-          delete_in_right = TRUE,
+          delete_in_right = FALSE,
           exclude_delete  = c("cache.duckdb", # file
                               "lineup_data", # folder
                               "prod_refy_estimation.fst",
-                              "lineup_dist_stats.fst", 
+                              "lineup_dist_stats.fst",
                               "lineup_years.fst"),
           force           = TRUE,
-          #backup          = FALSE,
           verbose         = FALSE)
-        TRUE
+        msg
       }, # end of expr section
       
       error = function(e) {
@@ -84,9 +84,9 @@ if (requireNamespace("pushoverr", quietly = TRUE)) {
         
         d <- f - s
         
-        msg <- paste0("ERROR in pipeline. \nStarted at ", start,
-                      "\nFinished at ", finish,
-                      "\nDifference ", d)
+        paste0("ERROR in pipeline. \nStarted at ", start,
+               "\nFinished at ", finish,
+               "\nDifference ", d)
         
       }, # end of error section
       
@@ -96,19 +96,15 @@ if (requireNamespace("pushoverr", quietly = TRUE)) {
         
         d <- f - s
         
-        msg <- paste0("WARNING in pipeline. \nStarted at ", start,
-                      "\nFinished at ", finish,
-                      "\nDifference ", d)
+        paste0("WARNING in pipeline. \nStarted at ", start,
+               "\nFinished at ", finish,
+               "\nDifference ", d)
         
-      }, # end of warning section
-      
-      finally = {
-        pushoverr::pushover(msg)
-        cli::cli_alert(msg)
       } # end of finally section
       
     ) # End of trycatch
-    
+    pushoverr::pushover(msg)
+    cli::cli_alert(msg)
     
     
     return(invisible(TRUE))
