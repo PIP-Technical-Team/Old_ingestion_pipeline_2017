@@ -95,6 +95,33 @@ if (requireNamespace("pushoverr", quietly = TRUE)) {
         finish <- format(f, "%H:%M")
         
         d <- f - s
+        tar_load_globals()
+        
+        sync_status <- syncdr::compare_directories(
+          left_path  = fs::path(gls$OUT_DIR_PC, gls$vintage_dir),
+          right_path = fs::path("e:/PIP/pipapi_data", gls$vintage_dir) |>
+            fs::dir_create(),
+          by_date    = TRUE,
+          by_content = FALSE,
+          verbose    = FALSE,
+          recurse    = TRUE)
+        
+        sync_common_files <- syncdr::common_files_asym_sync_to_right(
+          sync_status = sync_status,
+          force       = TRUE,
+          verbose     = FALSE)
+        
+        sync_uncommon_files <- syncdr::update_missing_files_asym_to_right(
+          sync_status     = sync_status,
+          copy_to_right   = TRUE,
+          delete_in_right = FALSE,
+          exclude_delete  = c("cache.duckdb", # file
+                              "lineup_data", # folder
+                              "prod_refy_estimation.fst",
+                              "lineup_dist_stats.fst",
+                              "lineup_years.fst"),
+          force           = TRUE,
+          verbose         = FALSE)
         
         paste0("WARNING in pipeline. \nStarted at ", start,
                "\nFinished at ", finish,
